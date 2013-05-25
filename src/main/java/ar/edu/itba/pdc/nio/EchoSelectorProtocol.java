@@ -7,7 +7,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 public class EchoSelectorProtocol implements TCPProtocol {
-    private int bufSize; // Size of I/O buffer
+    private int bufSize; 
 
     public EchoSelectorProtocol(int bufSize) {
         this.bufSize = bufSize;
@@ -15,40 +15,31 @@ public class EchoSelectorProtocol implements TCPProtocol {
 
     public void handleAccept(SelectionKey key) throws IOException {
         SocketChannel clntChan = ((ServerSocketChannel) key.channel()).accept();
-        clntChan.configureBlocking(false); // Must be nonblocking to register
-        // Register the selector with new channel for read and attach byte
-        // buffer
+        clntChan.configureBlocking(false); 
         clntChan.register(key.selector(), SelectionKey.OP_READ, ByteBuffer.allocate(bufSize));
     }
 
     public void handleRead(SelectionKey key) throws IOException {
-        // Client socket channel has pending data
         SocketChannel clntChan = (SocketChannel) key.channel();
         ByteBuffer buf = (ByteBuffer) key.attachment();
         long bytesRead = clntChan.read(buf);
-        if (bytesRead == -1) { // Did the other end close?
+        if (bytesRead == -1) {
             clntChan.close();
         } else if (bytesRead > 0) {
         	System.out.println(new String(buf.array()));
-            // Indicate via key that reading/writing are both of interest now.
             key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         }
     }
 
     public void handleWrite(SelectionKey key) throws IOException {
-        /*
-         * Channel is available for writing, and key is valid (i.e., client
-         * channel not closed).
-         */
-        // Retrieve data read earlier
+
         ByteBuffer buf = (ByteBuffer) key.attachment();
-        buf.flip(); // Prepare buffer for writing
+        buf.flip();
         SocketChannel clntChan = (SocketChannel) key.channel();
         clntChan.write(buf);
-        if (!buf.hasRemaining()) { // Buffer completely written?
-            // Nothing left, so no longer interested in writes
+        if (!buf.hasRemaining()) { 
             key.interestOps(SelectionKey.OP_READ);
         }
-        buf.compact(); // Make room for more data to be read in
+        buf.compact(); 
     }
 }

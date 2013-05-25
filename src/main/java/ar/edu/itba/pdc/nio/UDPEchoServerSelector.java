@@ -18,7 +18,6 @@ class UDPEchoServerSelector {
         throw new IllegalArgumentException("Parameter(s): <Port>");
 
         int servPort = Integer.parseInt(args[0]);
-        // Create a selector to multiplex client connections.
         Selector selector = Selector.open();
 
         DatagramChannel channel = DatagramChannel.open();
@@ -26,23 +25,18 @@ class UDPEchoServerSelector {
         channel.socket().bind(new InetSocketAddress(servPort));
         channel.register(selector, SelectionKey.OP_READ, new ClientRecord());
 
-        while (true) { // Run forever, receiving and echoing datagrams
-            // Wait for task or until timeout expires
+        while (true) { 
             if (selector.select(TIMEOUT) == 0) {
                 System.out.print(".");
                 continue;
             }
 
-            // Get iterator on set of keys with I/O to process
             Iterator<SelectionKey> keyIter = selector.selectedKeys().iterator();
             while (keyIter.hasNext()) {
-                SelectionKey key = keyIter.next(); // Key is bit mask
+                SelectionKey key = keyIter.next(); 
 
-                // Client socket channel has pending data?
                 if (key.isReadable()) handleRead(key);
 
-                // Client socket channel is available for writing and
-                // key is valid (i.e., channel not closed).
                 if (key.isValid() && key.isWritable()) handleWrite(key);
                 keyIter.remove();
             }
@@ -52,10 +46,9 @@ class UDPEchoServerSelector {
     public static void handleRead(SelectionKey key) throws IOException {
         DatagramChannel channel = (DatagramChannel) key.channel();
         ClientRecord clntRec = (ClientRecord) key.attachment();
-        clntRec.buffer.clear(); // Prepare buffer for receiving
+        clntRec.buffer.clear();
         clntRec.clientAddress = channel.receive(clntRec.buffer);
-        if (clntRec.clientAddress != null) { // Did we receive something?
-            // Register write with the selector
+        if (clntRec.clientAddress != null) {
             key.interestOps(SelectionKey.OP_WRITE);
         }
     }
@@ -63,10 +56,9 @@ class UDPEchoServerSelector {
     public static void handleWrite(SelectionKey key) throws IOException {
         DatagramChannel channel = (DatagramChannel) key.channel();
         ClientRecord clntRec = (ClientRecord) key.attachment();
-        clntRec.buffer.flip(); // Prepare buffer for sending
+        clntRec.buffer.flip();
         int bytesSent = channel.send(clntRec.buffer, clntRec.clientAddress);
-        if (bytesSent != 0) { // Buffer completely written?
-            // No longer interested in writes
+        if (bytesSent != 0) { 
             key.interestOps(SelectionKey.OP_READ);
         }
     }
