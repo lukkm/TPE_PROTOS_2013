@@ -16,7 +16,9 @@ import java.nio.channels.SocketChannel;
  * @since Sep 18, 2011
  */
 public class TCPEchoClientNonblocking {
+	
     public static void main(String args[]) throws Exception {
+    		
         if ((args.length < 2) || (args.length > 3)) // Test for correct # of
                                                     // args
         throw new IllegalArgumentException("Parameter(s): <Server> <Word> [<Port>]");
