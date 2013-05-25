@@ -11,8 +11,9 @@ import ar.edu.itba.pdc.interfaces.CommunicationProtocol;
 public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol {
     private int bufSize; 
     private boolean hasInformation = false;
-    private byte[] pendingInformation;
+    private ByteBuffer pendingInformation;
     private CommunicationProtocol serverConnector;
+    private SelectionKey clientSelectionKey;
     
     public EchoSelectorProtocol(int bufSize, CommunicationProtocol serverConnector) {
         this.bufSize = bufSize;
@@ -33,27 +34,31 @@ public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol 
             clntChan.close();
         } else if (bytesRead > 0) {
         	System.out.println(new String(buf.array()));
-            key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        	serverConnector.communicate(buf);
+        	this.clientSelectionKey = key;
+            key.interestOps(SelectionKey.OP_READ);
         }
     }
 
     public void handleWrite(SelectionKey key) throws IOException {
 
-        ByteBuffer buf = (ByteBuffer) key.attachment();
-        buf.flip();
+        //ByteBuffer buf = (ByteBuffer) key.attachment();
+        pendingInformation.flip();
         SocketChannel clntChan = (SocketChannel) key.channel();
-        clntChan.write(buf);
-        if (!buf.hasRemaining()) { 
+        clntChan.write(pendingInformation);
+        if (!pendingInformation.hasRemaining()) { 
+        	hasInformation = false;
             key.interestOps(SelectionKey.OP_READ);
         }
-        buf.compact(); 
+        pendingInformation.compact(); 
     }
 
 	@Override
-	public void communicate(byte[] message) {
+	public void communicate(ByteBuffer message) {
 		if (hasInformation)
 			return; /* TODO Avisar q esta bardeando */
 		hasInformation = true;
 		pendingInformation = message;
+		clientSelectionKey.interestOps(SelectionKey.OP_WRITE);
 	}
 }
