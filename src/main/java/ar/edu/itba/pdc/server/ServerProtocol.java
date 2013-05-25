@@ -22,10 +22,11 @@ public class ServerProtocol implements CommunicationProtocol {
 		final SocketChannel srvChan = SocketChannel.open();
         srvChan.configureBlocking(false);
         
-        if (!srvChan.connect(new InetSocketAddress("proxy.eu.jabber.org", 80))) {
+        if (!srvChan.connect(new InetSocketAddress("hermes.jabber.org", 5222))) {
             while (!srvChan.finishConnect()) {
             	
             }
+            System.out.println("asdasd");
         }
         
         new Thread(new Runnable(){
