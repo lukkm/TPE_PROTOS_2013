@@ -1,7 +1,9 @@
 package ar.edu.itba.pdc.interfaces;
 
+import java.nio.ByteBuffer;
+
 public interface CommunicationProtocol {
 
-	public void communicate(byte[] message);
+	public void communicate(ByteBuffer message);
 	
 }

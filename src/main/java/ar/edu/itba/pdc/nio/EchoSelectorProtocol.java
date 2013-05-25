@@ -6,11 +6,17 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
-public class EchoSelectorProtocol implements TCPProtocol {
-    private int bufSize; 
+import ar.edu.itba.pdc.interfaces.CommunicationProtocol;
 
-    public EchoSelectorProtocol(int bufSize) {
+public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol {
+    private int bufSize; 
+    private boolean hasInformation = false;
+    private byte[] pendingInformation;
+    private CommunicationProtocol serverConnector;
+    
+    public EchoSelectorProtocol(int bufSize, CommunicationProtocol serverConnector) {
         this.bufSize = bufSize;
+        this.serverConnector = serverConnector;
     }
 
     public void handleAccept(SelectionKey key) throws IOException {
@@ -42,4 +48,12 @@ public class EchoSelectorProtocol implements TCPProtocol {
         }
         buf.compact(); 
     }
+
+	@Override
+	public void communicate(byte[] message) {
+		if (hasInformation)
+			return; /* TODO Avisar q esta bardeando */
+		hasInformation = true;
+		pendingInformation = message;
+	}
 }
