@@ -15,9 +15,12 @@ public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol 
     private CommunicationProtocol serverConnector;
     private SelectionKey clientSelectionKey;
     
-    public EchoSelectorProtocol(int bufSize, CommunicationProtocol serverConnector) {
+    public EchoSelectorProtocol(int bufSize) {
         this.bufSize = bufSize;
-        this.serverConnector = serverConnector;
+    }
+    
+    public void setServerConnector(CommunicationProtocol serverConnector) {
+    	this.serverConnector = serverConnector;
     }
 
     public void handleAccept(SelectionKey key) throws IOException {
@@ -30,6 +33,7 @@ public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol 
         SocketChannel clntChan = (SocketChannel) key.channel();
         ByteBuffer buf = (ByteBuffer) key.attachment();
         long bytesRead = clntChan.read(buf);
+        System.out.println(key.channel());
         if (bytesRead == -1) {
             clntChan.close();
         } else if (bytesRead > 0) {
@@ -55,10 +59,15 @@ public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol 
 
 	@Override
 	public void communicate(ByteBuffer message) {
-		if (hasInformation)
-			return; /* TODO Avisar q esta bardeando */
-		hasInformation = true;
-		pendingInformation = message;
-		clientSelectionKey.interestOps(SelectionKey.OP_WRITE);
+		if (clientSelectionKey != null) {
+			System.out.println("mensaje piola de juanjo:" + new String(message.array()));
+			if (hasInformation)
+				return; /* TODO Avisar q esta bardeando */
+			hasInformation = true;
+			pendingInformation = message;
+			clientSelectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+		} else {
+			System.out.println("Mensaje irrelevante de juanjo: " + new String(message.array()));
+		}
 	}
 }
