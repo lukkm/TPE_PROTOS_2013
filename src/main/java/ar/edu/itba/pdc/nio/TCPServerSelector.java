@@ -24,7 +24,7 @@ public class TCPServerSelector {
         clientProtocol.setServerConnector(serverProtocol);
         serverProtocol.setClientProtocol(clientProtocol);
         
-        //serverProtocol.start();
+        serverProtocol.start();
         
         Selector selector = Selector.open();
         for (String arg : args) {

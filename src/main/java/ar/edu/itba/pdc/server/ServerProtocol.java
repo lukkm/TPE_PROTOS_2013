@@ -2,7 +2,6 @@ package ar.edu.itba.pdc.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -26,7 +25,6 @@ public class ServerProtocol implements CommunicationProtocol {
             while (!srvChan.finishConnect()) {
             	
             }
-            System.out.println("asdasd");
         }
         
         new Thread(new Runnable(){
@@ -45,16 +43,12 @@ public class ServerProtocol implements CommunicationProtocol {
 							}
 						}
 						if (ServerProtocol.this.hasInformation) {
-//							System.out.println("Mensaje del gil de luki: " + new String(writeBuf.array()));
+							System.out.println("Mensaje del gil de luki: " + new String(writeBuf.array()));
 //							System.out.println("De nuevo: " + new String(writeBuf.array()) + "aaa");
-							//while(ServerProtocol.this.writeBuf.hasRemaining())
-							int bytes;
-							while ((bytes = srvChan.write(ServerProtocol.this.writeBuf)) != 0) {
-								System.out.println("asd " + bytes);
+							while(ServerProtocol.this.writeBuf.hasRemaining()) {
+								srvChan.write(ServerProtocol.this.writeBuf);
 							}
-							System.out.println(bytes);
 							ServerProtocol.this.hasInformation = false;
-							System.out.println("Lestooo");
 						}
 					} catch (IOException e) {
 						e.printStackTrace();

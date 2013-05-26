@@ -38,16 +38,9 @@ public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol 
             clntChan.close();
         } else if (bytesRead > 0) {
         	System.out.println(new String(buf.array()));
-        	if (new String(buf.array()).contains("CONNECT")) {
-        		hasInformation = true;
-    			pendingInformation = ByteBuffer.wrap("HTTP/1.1 200 OK\n".getBytes());
-    			key.interestOps(SelectionKey.OP_WRITE);
-        	} else {
-        		System.out.println("asdasd");
-        		serverConnector.communicate(buf);
-        		this.clientSelectionKey = key;
-        		key.interestOps(SelectionKey.OP_READ);
-        	}
+    		serverConnector.communicate(buf);
+    		this.clientSelectionKey = key;
+    		key.interestOps(SelectionKey.OP_READ);
         }
     }
 
