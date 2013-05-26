@@ -21,7 +21,7 @@ public class ServerProtocol implements CommunicationProtocol {
 		final SocketChannel srvChan = SocketChannel.open();
         srvChan.configureBlocking(false);
         
-        if (!srvChan.connect(new InetSocketAddress("hermes.jabber.org", 5222))) {
+        if (!srvChan.connect(new InetSocketAddress("208.68.163.221", 5222))) {
             while (!srvChan.finishConnect()) {
             	
             }
@@ -31,24 +31,24 @@ public class ServerProtocol implements CommunicationProtocol {
 
 			@Override
 			public void run() {
-				ByteBuffer readBuf = ByteBuffer.allocate(10000);
+				ByteBuffer readBuf = ByteBuffer.allocate(50000);
 				int bytesRead;
 				while (true) {
 					try {
 						if ((bytesRead = srvChan.read(readBuf)) != -1) {
 							if (bytesRead > 0) {
-								System.out.println("Bytes: " + bytesRead);
-								System.out.println("Mensaje del servidor: " + new String(readBuf.array()));								
-								ServerProtocol.this.clientProtocol.communicate(readBuf);
+								System.out.println("Received from hermes: " + new String(readBuf.array()) + "\n");
+								clientProtocol.communicate(ByteBuffer.wrap(readBuf.array(), 0, (int)bytesRead));
+								readBuf.clear();
 							}
 						}
-						if (ServerProtocol.this.hasInformation) {
-							System.out.println("Mensaje del gil de luki: " + new String(writeBuf.array()));
-//							System.out.println("De nuevo: " + new String(writeBuf.array()) + "aaa");
-							while(ServerProtocol.this.writeBuf.hasRemaining()) {
-								srvChan.write(ServerProtocol.this.writeBuf);
+						if (hasInformation) {
+							System.out.println("Sending to hermes: " + new String(writeBuf.array()) + "\n");
+							while(writeBuf.hasRemaining()) {
+								srvChan.write(writeBuf);
 							}
-							ServerProtocol.this.hasInformation = false;
+							//writeBuf.clear();
+							hasInformation = false;
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -61,7 +61,9 @@ public class ServerProtocol implements CommunicationProtocol {
 	
 	@Override
 	public void communicate(ByteBuffer message) {
+		while(hasInformation);
 		this.writeBuf = message;
+//		message.clear();
 		this.hasInformation = true;
 	}	
 }
