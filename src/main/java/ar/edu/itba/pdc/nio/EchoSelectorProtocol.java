@@ -29,6 +29,7 @@ public class EchoSelectorProtocol implements TCPProtocol {
         if (bytesRead == -1) { // Did the other end close?
             clntChan.close();
         } else if (bytesRead > 0) {
+    		System.out.println(buf.array());
             // Indicate via key that reading/writing are both of interest now.
             key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         }
