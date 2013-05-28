@@ -9,6 +9,8 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
 import ar.edu.itba.pdc.interfaces.KeyCallback;
+import ar.edu.itba.pdc.keyImpl.ClientKeyCallback;
+import ar.edu.itba.pdc.keyImpl.ServerKeyCallback;
 
 public class TCPServerSelector { 
     private static final int TIMEOUT = 3000; 
@@ -18,6 +20,12 @@ public class TCPServerSelector {
             throw new IllegalArgumentException("Parameter(s): <Client Port> <Admin Port> ...");
         }
         
+        
+        ClientKeyCallback clientCallback = new ClientKeyCallback();
+        ServerKeyCallback serverCallback = new ServerKeyCallback();
+        
+        clientCallback.setServerCallback(serverCallback);
+        serverCallback.setserverCallback(clientCallback);
         //ServerProtocol serverProtocol = new ServerProtocol();
         //EchoSelectorProtocol clientProtocol = new EchoSelectorProtocol(BUFSIZE);
         
@@ -33,21 +41,21 @@ public class TCPServerSelector {
         ServerSocketChannel listnChannel = ServerSocketChannel.open();
         listnChannel.socket().bind(new InetSocketAddress(Integer.parseInt(args[0])));
         listnChannel.configureBlocking(false);
-        listnChannel.register(selector, SelectionKey.OP_ACCEPT);
+        listnChannel.register(selector, SelectionKey.OP_ACCEPT, clientCallback);
         
         /* Bindear el socket admin */
         
-        ServerSocketChannel adminChannel = ServerSocketChannel.open();
+        /*ServerSocketChannel adminChannel = ServerSocketChannel.open();
         adminChannel.socket().bind(new InetSocketAddress(Integer.parseInt(args[1])));
         adminChannel.configureBlocking(false);
-        adminChannel.register(selector, SelectionKey.OP_ACCEPT);
+        adminChannel.register(selector, SelectionKey.OP_ACCEPT);*/
         
         /* Bindear el socket servidor */
         
         SocketChannel serverChannel = SocketChannel.open();
         serverChannel.connect(new InetSocketAddress("hermes.jabber.org", 5222));
         serverChannel.configureBlocking(false);
-        serverChannel.register(selector, SelectionKey.OP_READ);
+        serverChannel.register(selector, SelectionKey.OP_READ, serverCallback);
         
         while (true) { 
             if (selector.select(TIMEOUT) == 0) {
