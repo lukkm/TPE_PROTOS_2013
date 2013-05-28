@@ -6,49 +6,67 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
-public class EchoSelectorProtocol implements TCPProtocol {
-    private int bufSize; // Size of I/O buffer
+import ar.edu.itba.pdc.interfaces.CommunicationProtocol;
 
+public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol {
+    private int bufSize; 
+    private boolean hasInformation = false;
+    private ByteBuffer pendingInformation;
+    private CommunicationProtocol serverConnector;
+    private SelectionKey clientSelectionKey;
+    
     public EchoSelectorProtocol(int bufSize) {
         this.bufSize = bufSize;
+    }
+    
+    public void setServerConnector(CommunicationProtocol serverConnector) {
+    	this.serverConnector = serverConnector;
     }
 
     public void handleAccept(SelectionKey key) throws IOException {
         SocketChannel clntChan = ((ServerSocketChannel) key.channel()).accept();
-        clntChan.configureBlocking(false); // Must be nonblocking to register
-        // Register the selector with new channel for read and attach byte
-        // buffer
+        clntChan.configureBlocking(false); 
         clntChan.register(key.selector(), SelectionKey.OP_READ, ByteBuffer.allocate(bufSize));
     }
 
     public void handleRead(SelectionKey key) throws IOException {
-        // Client socket channel has pending data
         SocketChannel clntChan = (SocketChannel) key.channel();
         ByteBuffer buf = (ByteBuffer) key.attachment();
         long bytesRead = clntChan.read(buf);
-        if (bytesRead == -1) { // Did the other end close?
+        if (bytesRead == -1) {
             clntChan.close();
         } else if (bytesRead > 0) {
-    		System.out.println(buf.array());
-            // Indicate via key that reading/writing are both of interest now.
-            key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        	System.out.println("Received from client: " + new String(buf.array()) + "\n");
+    		serverConnector.communicate(ByteBuffer.wrap(buf.array(), 0, (int)bytesRead));
+    		buf.clear();
+    		this.clientSelectionKey = key;
+    		key.interestOps(SelectionKey.OP_READ);
         }
     }
 
     public void handleWrite(SelectionKey key) throws IOException {
-        /*
-         * Channel is available for writing, and key is valid (i.e., client
-         * channel not closed).
-         */
-        // Retrieve data read earlier
-        ByteBuffer buf = (ByteBuffer) key.attachment();
-        buf.flip(); // Prepare buffer for writing
+
+        //ByteBuffer buf = (ByteBuffer) key.attachment();
+//        pendingInformation.flip();
         SocketChannel clntChan = (SocketChannel) key.channel();
-        clntChan.write(buf);
-        if (!buf.hasRemaining()) { // Buffer completely written?
-            // Nothing left, so no longer interested in writes
-            key.interestOps(SelectionKey.OP_READ);
-        }
-        buf.compact(); // Make room for more data to be read in
+        System.out.println("Sending to client: " + new String(pendingInformation.array()) + "\n");
+        if (hasInformation)
+        	clntChan.write(pendingInformation);
+        //pendingInformation.clear();
+        hasInformation = false;
+        key.interestOps(SelectionKey.OP_READ);
+//        pendingInformation.compact();
     }
+
+	@Override
+	public void communicate(ByteBuffer message) {
+		if (clientSelectionKey != null) {
+			while (hasInformation);
+			pendingInformation = message;
+			hasInformation = true;
+			clientSelectionKey.interestOps(SelectionKey.OP_WRITE);
+		} else {
+			System.out.println("Mensaje irrelevante de juanjo: " + new String(message.array()));
+		}
+	}
 }

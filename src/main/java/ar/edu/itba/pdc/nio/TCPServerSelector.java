@@ -5,53 +5,76 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
+import ar.edu.itba.pdc.interfaces.KeyCallback;
+import ar.edu.itba.pdc.server.ServerProtocol;
+
 public class TCPServerSelector {
-    private static final int BUFSIZE = 256; // Buffer size (bytes)
-    private static final int TIMEOUT = 3000; // Wait timeout (milliseconds)
+    private static final int BUFSIZE = 10000; 
+    private static final int TIMEOUT = 3000; 
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 1) { // Test for correct # of args
-            throw new IllegalArgumentException("Parameter(s): <Port> ...");
+        if (args.length < 2) { 
+            throw new IllegalArgumentException("Parameter(s): <Client Port> <Admin Port> ...");
         }
-        // Create a selector to multiplex listening sockets and connections
+        
+        ServerProtocol serverProtocol = new ServerProtocol();
+        EchoSelectorProtocol clientProtocol = new EchoSelectorProtocol(BUFSIZE);
+        
+        clientProtocol.setServerConnector(serverProtocol);
+        serverProtocol.setClientProtocol(clientProtocol);
+        
+        serverProtocol.start();
+        
         Selector selector = Selector.open();
-        // Create listening socket channel for each port and register selector
-        for (String arg : args) {
-            ServerSocketChannel listnChannel = ServerSocketChannel.open();
-            listnChannel.socket().bind(new InetSocketAddress(Integer.parseInt(arg)));
-            listnChannel.configureBlocking(false); // must be nonblocking to
-                                                   // register
-            // Register selector with channel. The returned key is ignored
-            listnChannel.register(selector, SelectionKey.OP_ACCEPT);
-        }
-        // Create a handler that will implement the protocol
-        TCPProtocol protocol = new EchoSelectorProtocol(BUFSIZE);
-        while (true) { // Run forever, processing available I/O operations
-            // Wait for some channel to be ready (or timeout)
-            if (selector.select(TIMEOUT) == 0) { // returns # of ready chans
+        
+        /* Bindear el socket cliente */
+        
+        ServerSocketChannel listnChannel = ServerSocketChannel.open();
+        listnChannel.socket().bind(new InetSocketAddress(Integer.parseInt(args[0])));
+        listnChannel.configureBlocking(false);
+        listnChannel.register(selector, SelectionKey.OP_ACCEPT);
+        
+        /* Bindear el socket admin */
+        
+        ServerSocketChannel adminChannel = ServerSocketChannel.open();
+        adminChannel.socket().bind(new InetSocketAddress(Integer.parseInt(args[1])));
+        adminChannel.configureBlocking(false);
+        adminChannel.register(selector, SelectionKey.OP_ACCEPT);
+        
+        /* Bindear el socket servidor */
+        
+        SocketChannel serverChannel = SocketChannel.open();
+        serverChannel.connect(new InetSocketAddress("hermes.jabber.org", 5222));
+        serverChannel.configureBlocking(false);
+        serverChannel.register(selector, SelectionKey.OP_READ);
+        
+        while (true) { 
+            if (selector.select(TIMEOUT) == 0) {
                 System.out.print(".");
                 continue;
             }
-            // Get iterator on set of keys with I/O to process
+
             Iterator<SelectionKey> keyIter = selector.selectedKeys().iterator();
             while (keyIter.hasNext()) {
-                SelectionKey key = keyIter.next(); // Key is bit mask
-                // Server socket channel has pending connection requests?
+                SelectionKey key = keyIter.next(); 
                 if (key.isAcceptable()) {
-                    protocol.handleAccept(key);
+                	((KeyCallback)key.attachment()).accept(key);
+                    //clientProtocol.handleAccept(key);
                 }
-                // Client socket channel has pending data?
+
                 if (key.isReadable()) {
-                    protocol.handleRead(key);
+                	((KeyCallback)key.attachment()).read(key);
+//                	clientProtocol.handleRead(key);
                 }
-                // Client socket channel is available for writing and
-                // key is valid (i.e., channel not closed)?
+
                 if (key.isValid() && key.isWritable()) {
-                    protocol.handleWrite(key);
+                	((KeyCallback)key.attachment()).write(key);
+//                	clientProtocol.handleWrite(key);
                 }
-                keyIter.remove(); // remove from set of selected keys
+                keyIter.remove();
             }
         }
     }
