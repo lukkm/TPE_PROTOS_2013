@@ -9,10 +9,8 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
 import ar.edu.itba.pdc.interfaces.KeyCallback;
-import ar.edu.itba.pdc.server.ServerProtocol;
 
-public class TCPServerSelector {
-    private static final int BUFSIZE = 10000; 
+public class TCPServerSelector { 
     private static final int TIMEOUT = 3000; 
 
     public static void main(String[] args) throws IOException {
@@ -20,13 +18,13 @@ public class TCPServerSelector {
             throw new IllegalArgumentException("Parameter(s): <Client Port> <Admin Port> ...");
         }
         
-        ServerProtocol serverProtocol = new ServerProtocol();
-        EchoSelectorProtocol clientProtocol = new EchoSelectorProtocol(BUFSIZE);
+        //ServerProtocol serverProtocol = new ServerProtocol();
+        //EchoSelectorProtocol clientProtocol = new EchoSelectorProtocol(BUFSIZE);
         
-        clientProtocol.setServerConnector(serverProtocol);
-        serverProtocol.setClientProtocol(clientProtocol);
+        //clientProtocol.setServerConnector(serverProtocol);
+        //serverProtocol.setClientProtocol(clientProtocol);
         
-        serverProtocol.start();
+        //serverProtocol.start();
         
         Selector selector = Selector.open();
         
