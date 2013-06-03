@@ -15,8 +15,6 @@ public class ClientKeyCallback implements KeyCallback, CommunicationProtocol {
 	private CommunicationProtocol serverCommunicator;
 	private ByteBuffer buf = ByteBuffer.allocate(BUFSIZE);
 	private ByteBuffer pendingInformation = ByteBuffer.allocate(BUFSIZE);
-	private boolean hasInformation = false;
-	private SelectionKey clientKey;
 	
 	public void setServerCallback(CommunicationProtocol serverCommunicator) {
 		this.serverCommunicator = serverCommunicator;
@@ -25,7 +23,6 @@ public class ClientKeyCallback implements KeyCallback, CommunicationProtocol {
 	@Override
 	public void accept(SelectionKey key) {
 		try {
-			clientKey = key;
         	SocketChannel clntChan = ((ServerSocketChannel) key.channel()).accept();
         	clntChan.configureBlocking(false);
 			clntChan.register(key.selector(), SelectionKey.OP_READ, this);
@@ -44,6 +41,7 @@ public class ClientKeyCallback implements KeyCallback, CommunicationProtocol {
 	        if (bytesRead == -1) {
 	            clntChan.close();
 	        } else if (bytesRead > 0) {
+	        	System.out.println("Bytes" + bytesRead);
 	        	System.out.println("Received from client: " + new String(buf.array()) + "\n");
 	    		serverCommunicator.communicate(ByteBuffer.wrap(buf.array(), 0, (int)bytesRead));
 	    		buf.clear();
@@ -56,32 +54,29 @@ public class ClientKeyCallback implements KeyCallback, CommunicationProtocol {
 
 	@Override
 	public void write(SelectionKey key) {
-		  SocketChannel clntChan = (SocketChannel) key.channel();
-	        System.out.println("Sending to client: " + new String(pendingInformation.array()) + "\n");
-	        while(!hasInformation);
-	        while(pendingInformation.hasRemaining())
-				try {
-					clntChan.write(pendingInformation);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-	        //pendingInformation.clear();
-	        hasInformation = false;
-	        key.interestOps(SelectionKey.OP_READ);
+		SocketChannel clntChan = (SocketChannel) key.channel();
+	    if (pendingInformation.hasRemaining())  
+	    	System.out.println("Sending to client: " + new String(pendingInformation.array()) + "\n");
+	    while(pendingInformation.hasRemaining())
+	    try {
+			clntChan.write(pendingInformation);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        //pendingInformation.clear();
+        key.interestOps(SelectionKey.OP_READ);
 //	        pendingInformation.compact();
 	}
 
 	@Override
 	public void communicate(ByteBuffer message) {
 		pendingInformation.put(message);
-		hasInformation = true;
 //		clientKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 	}
 
 	@Override
 	public void connect(SelectionKey key) {
 		// TODO Auto-generated method stub
-		
 	}
 
 }
