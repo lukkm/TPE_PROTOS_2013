@@ -23,12 +23,13 @@ public class ServerKeyCallback implements KeyCallback, CommunicationProtocol {
 	
 	@Override
 	public void accept(SelectionKey key) {
-		// TODO Auto-generated method stu		
+		
 	}
 
 	@Override
 	public void read(SelectionKey key) {
 		try {
+			
 			long bytesRead;
 			SocketChannel srvChan = (SocketChannel) key.channel();
 	        bytesRead = srvChan.read(buf);
@@ -47,26 +48,35 @@ public class ServerKeyCallback implements KeyCallback, CommunicationProtocol {
 
 	@Override
 	public void write(SelectionKey key) {
-		SocketChannel srvChan = (SocketChannel) key.channel();
-        System.out.println("Sending to hermes: " + new String(pendingInformation.array()) + "\n");
-        while(!hasInformation);
-        while(pendingInformation.hasRemaining())
-			try {
-				srvChan.write(pendingInformation);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-        //pendingInformation.clear();
-        hasInformation = false;
-        key.interestOps(SelectionKey.OP_READ);
-//        pendingInformation.compact();
+		if (hasInformation) {
+			SocketChannel srvChan = (SocketChannel) key.channel();
+		    System.out.println("Sending to hermes: " + new String(pendingInformation.array()) + "\n");
+		//        while(!hasInformation);
+		    while(pendingInformation.hasRemaining())
+				try {
+					srvChan.write(pendingInformation);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		    //pendingInformation.clear();
+		    hasInformation = false;
+		    key.interestOps(SelectionKey.OP_READ);
+		//        pendingInformation.compact();
+		} else {
+			//key.interestOps(SelectionKey.OP_WRITE);
+		}
 	}
 
 	@Override
 	public void communicate(ByteBuffer message) {
 		pendingInformation.put(message);
 		hasInformation = true;
-		serverKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+		//serverKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+	}
+
+	@Override
+	public void connect(SelectionKey key) {
+		key.interestOps(SelectionKey.OP_WRITE);
 	}
 
 }

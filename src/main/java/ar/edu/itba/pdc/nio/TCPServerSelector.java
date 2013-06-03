@@ -55,7 +55,7 @@ public class TCPServerSelector {
         SocketChannel serverChannel = SocketChannel.open();
         serverChannel.connect(new InetSocketAddress("hermes.jabber.org", 5222));
         serverChannel.configureBlocking(false);
-        serverChannel.register(selector, SelectionKey.OP_READ, serverCallback);
+        serverChannel.register(selector, SelectionKey.OP_WRITE, serverCallback);
         
         while (true) { 
             if (selector.select(TIMEOUT) == 0) {
@@ -66,19 +66,19 @@ public class TCPServerSelector {
             Iterator<SelectionKey> keyIter = selector.selectedKeys().iterator();
             while (keyIter.hasNext()) {
                 SelectionKey key = keyIter.next(); 
+                if (key.isConnectable()) {
+                	((KeyCallback)key.attachment()).connect(key);
+                }
                 if (key.isAcceptable()) {
                 	((KeyCallback)key.attachment()).accept(key);
-                    //clientProtocol.handleAccept(key);
                 }
 
                 if (key.isReadable()) {
                 	((KeyCallback)key.attachment()).read(key);
-//                	clientProtocol.handleRead(key);
                 }
 
                 if (key.isValid() && key.isWritable()) {
                 	((KeyCallback)key.attachment()).write(key);
-//                	clientProtocol.handleWrite(key);
                 }
                 keyIter.remove();
             }

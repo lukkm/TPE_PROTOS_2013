@@ -28,7 +28,7 @@ public class ClientKeyCallback implements KeyCallback, CommunicationProtocol {
 			clientKey = key;
         	SocketChannel clntChan = ((ServerSocketChannel) key.channel()).accept();
         	clntChan.configureBlocking(false);
-			clntChan.register(key.selector(), SelectionKey.OP_READ);
+			clntChan.register(key.selector(), SelectionKey.OP_READ, this);
 			buf = ByteBuffer.allocate(BUFSIZE);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -75,7 +75,13 @@ public class ClientKeyCallback implements KeyCallback, CommunicationProtocol {
 	public void communicate(ByteBuffer message) {
 		pendingInformation.put(message);
 		hasInformation = true;
-		clientKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+//		clientKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+	}
+
+	@Override
+	public void connect(SelectionKey key) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
