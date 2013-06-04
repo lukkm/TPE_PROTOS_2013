@@ -1,26 +1,28 @@
 package ar.edu.itba.pdc.nio;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.Map;
 
-import ar.edu.itba.pdc.controllers.Controller;
-import ar.edu.itba.pdc.factories.ClientFactory;
-import ar.edu.itba.pdc.interfaces.KeyCallback;
+import ar.edu.itba.pdc.controllers.ClientHandler;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 
 public class DispatcherHandler { 
     private static final int TIMEOUT = 3000; 
+   
+    Map<ServerSocketChannel, TCPHandler> handlerMap;
     
-    private Random random;
-    List<Controller> controllerList; 
+    public DispatcherHandler() {
+    	handlerMap = new HashMap<ServerSocketChannel, TCPHandler>();
+    }
 
-    public void run() {
+    public void run() throws IOException {
 //        if (args.length < 2) { 
 //            throw new IllegalArgumentException("Parameter(s): <Client Port> <Admin Port> ...");
 //        }
@@ -39,15 +41,20 @@ public class DispatcherHandler {
         
         //serverProtocol.start();
         
+    	/* Genero los handlers */
+    	
+    	
         Selector selector = Selector.open();
         
+        ClientHandler clientHandler = new ClientHandler(selector);
+
         /* Bindear el socket cliente */
         
-        ServerSocketChannel listnChannel = ServerSocketChannel.open();
-        listnChannel.socket().bind(new InetSocketAddress(Integer.parseInt(args[0])));
-        listnChannel.configureBlocking(false);
-        listnChannel.register(selector, SelectionKey.OP_ACCEPT, new ClientFactory());
-        
+        ServerSocketChannel clientChannel = ServerSocketChannel.open();
+        clientChannel.socket().bind(new InetSocketAddress(5678));
+        clientChannel.configureBlocking(false);
+        clientChannel.register(selector, SelectionKey.OP_ACCEPT);
+        handlerMap.put(clientChannel, clientHandler);
         /* Bindear el socket admin */
         
 //        ServerSocketChannel adminChannel = ServerSocketChannel.open();
@@ -72,21 +79,19 @@ public class DispatcherHandler {
             while (keyIter.hasNext()) {
                 SelectionKey key = keyIter.next(); 
                 if (key.isAcceptable()) {
-                	SocketChannel clientChannel = ((ServerSocketChannel) key.channel()).accept();
-                	clientChannel.configureBlocking(false);
-                	int rand = random.nextInt(controllerList.size());
-					Controller randomController = controllerList
-							.get(rand);
-					randomController.register(clientChannel, new TCPHandler(){});
+                	ServerSocketChannel channel = handlerMap.get(key.channel()).accept(key);
+                	if (channel != null)
+                		handlerMap.put(channel, handlerMap.get(key.channel()));
                 }
 
                 if (key.isReadable()) {
-                	((KeyCallback)key.attachment()).read(key);
+                	SocketChannel channel = handlerMap.get(key.channel()).read(key);
+                	if (channel != null)
+                		handlerMap.put(channel, handlerMap.get(key.channel()));
                 }
 
                 if (key.isValid() && key.isWritable()) {
-                	((KeyCallback)key.attachment()).write(key);
-//                	clientProtocol.handleWrite(key);
+                	handlerMap.get(key.channel()).write(key);
                 }
                 keyIter.remove();
             }

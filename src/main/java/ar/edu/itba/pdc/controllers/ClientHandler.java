@@ -1,0 +1,87 @@
+package ar.edu.itba.pdc.controllers;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Map;
+
+import ar.edu.itba.pdc.interfaces.TCPHandler;
+import ar.edu.itba.pdc.proxy.ProxyConfiguration;
+
+public class ClientHandler implements TCPHandler {
+
+	private Map<SocketChannel, ProxyConfiguration> config;
+	private Selector selector;
+	
+	public ClientHandler(Selector selector) {
+		this.selector = selector;
+		config = new HashMap<SocketChannel, ProxyConfiguration>();
+	}
+	
+	@Override
+	public SocketChannel accept(SelectionKey key) throws IOException {
+		SocketChannel clientChannel = ((ServerSocketChannel)key.channel()).accept();
+    	clientChannel.configureBlocking(false);
+    	clientChannel.register(selector, SelectionKey.OP_READ);
+        
+    	config.put(clientChannel, new ProxyConfiguration(clientChannel));
+    	
+    	return clientChannel;
+	}
+
+	@Override
+	public SocketChannel read(SelectionKey key) throws IOException {
+		
+		ProxyConfiguration configuration = config.get(key.channel());
+		
+		/* Perform the read operation */
+		configuration.readFrom((SocketChannel)key.channel());
+		
+		if (!configuration.hasServer()) {
+			
+			/* A implementar bien dependiendo del read que haga */
+	    	
+			SocketChannel serverChannel = SocketChannel.open();
+	        serverChannel.connect(new InetSocketAddress("hermes.jabber.org", 5222));
+	        serverChannel.configureBlocking(false);
+	        serverChannel.register(selector, SelectionKey.OP_READ);
+	        config.put(serverChannel, configuration);
+	        
+	        /* Hasta aca */
+	        
+	        return serverChannel;
+		}
+		
+		updateSelectionKeys(configuration);
+		
+		return null;
+		
+	}
+
+	@Override
+	public void write(SelectionKey key) throws IOException {
+		ProxyConfiguration configuration = config.get(key.channel());
+		configuration.writeTo((SocketChannel)key.channel());
+		updateSelectionKeys(configuration);
+	}
+	
+	private void updateSelectionKeys(ProxyConfiguration configuration) throws ClosedChannelException {
+		if (configuration.hasInformationForChannel(configuration.getServerChannel())) {
+			configuration.getServerChannel().register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+		} else {
+			configuration.getServerChannel().register(selector, SelectionKey.OP_READ);
+		}
+		
+		if (configuration.hasInformationForChannel(configuration.getClientChannel())) {
+			configuration.getClientChannel().register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+		} else {
+			configuration.getClientChannel().register(selector, SelectionKey.OP_READ);
+		}
+	}
+
+}
