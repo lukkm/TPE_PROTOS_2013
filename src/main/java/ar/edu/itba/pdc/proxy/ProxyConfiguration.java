@@ -56,9 +56,14 @@ public class ProxyConfiguration {
 		if (hasInformationForChannel(s)) {
 			List<ByteBuffer> socketQueue = queueMap.get(s);
 			if (socketQueue != null && !socketQueue.isEmpty()) {
-				System.out.println("Escribiendo: " + new String(socketQueue.get(0).array()));
-				s.write(socketQueue.get(0));
-				if (!socketQueue.get(0).hasRemaining())
+				//System.out.println("Escribiendo: " + new String(socketQueue.get(0).array()));
+				if (s == server) 
+					System.out.println("Escrito al server: " + new String(socketQueue.get(0).array()).length());
+				else 
+					System.out.println("Escrito al cliente: " + new String(socketQueue.get(0).array()).length());
+				int bytesWrote = s.write(socketQueue.get(0));
+				System.out.println("Bytes escritos: " + bytesWrote);
+				if (socketQueue.get(0).position() == socketQueue.get(0).limit())
 					socketQueue.remove(0);
 			}
 		}
@@ -72,11 +77,12 @@ public class ProxyConfiguration {
 		} else if (bytesRead > 0) {
 			/* Unica logica a modificar */
 			if (s == server) {
-				queueMap.get(client).add(b);
+				queueMap.get(client).add(ByteBuffer.wrap(b.array(), 0, bytesRead));
+				System.out.println("Leido del server: " + new String(b.array()));
 			} else if (s == client) {
-				queueMap.get(server).add(b);
+				queueMap.get(server).add(ByteBuffer.wrap(b.array(), 0, bytesRead));
+				System.out.println("Leido del cliente: " + new String(b.array()));
 			}
-			System.out.println("Leido: " + new String(b.array()));
 		}
 	}
 }

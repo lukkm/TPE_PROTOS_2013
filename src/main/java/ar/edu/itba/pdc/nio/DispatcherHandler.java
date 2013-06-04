@@ -72,7 +72,7 @@ public class DispatcherHandler {
 //        
         while (!Thread.interrupted()) { 
             if (selector.select(TIMEOUT) == 0) {
-                System.out.print(".");
+                System.out.print(selector.keys().size());
                 continue;
             }
 
