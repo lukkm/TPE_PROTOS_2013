@@ -6,6 +6,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.AbstractSelectableChannel;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -16,10 +17,10 @@ import ar.edu.itba.pdc.interfaces.TCPHandler;
 public class DispatcherHandler { 
     private static final int TIMEOUT = 3000; 
    
-    Map<ServerSocketChannel, TCPHandler> handlerMap;
+    Map<AbstractSelectableChannel, TCPHandler> handlerMap;
     
     public DispatcherHandler() {
-    	handlerMap = new HashMap<ServerSocketChannel, TCPHandler>();
+    	handlerMap = new HashMap<AbstractSelectableChannel, TCPHandler>();
     }
 
     public void run() throws IOException {
@@ -79,7 +80,7 @@ public class DispatcherHandler {
             while (keyIter.hasNext()) {
                 SelectionKey key = keyIter.next(); 
                 if (key.isAcceptable()) {
-                	ServerSocketChannel channel = handlerMap.get(key.channel()).accept(key);
+                	SocketChannel channel = handlerMap.get(key.channel()).accept(key);
                 	if (channel != null)
                 		handlerMap.put(channel, handlerMap.get(key.channel()));
                 }

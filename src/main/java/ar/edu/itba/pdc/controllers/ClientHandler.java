@@ -39,27 +39,26 @@ public class ClientHandler implements TCPHandler {
 		
 		ProxyConfiguration configuration = config.get(key.channel());
 		
-		/* Perform the read operation */
-		configuration.readFrom((SocketChannel)key.channel());
+		SocketChannel serverChannel = null;
 		
 		if (!configuration.hasServer()) {
 			
 			/* A implementar bien dependiendo del read que haga */
 	    	
-			SocketChannel serverChannel = SocketChannel.open();
+			serverChannel = SocketChannel.open();
 	        serverChannel.connect(new InetSocketAddress("hermes.jabber.org", 5222));
 	        serverChannel.configureBlocking(false);
 	        serverChannel.register(selector, SelectionKey.OP_READ);
+	        configuration.setServer(serverChannel);
 	        config.put(serverChannel, configuration);
 	        
-	        /* Hasta aca */
-	        
-	        return serverChannel;
+	        /* Hasta aca */	        
 		}
 		
+		/* Perform the read operation */
+		configuration.readFrom((SocketChannel)key.channel());
 		updateSelectionKeys(configuration);
-		
-		return null;
+		return serverChannel;
 		
 	}
 

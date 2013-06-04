@@ -55,7 +55,8 @@ public class ProxyConfiguration {
 	public void writeTo(SocketChannel s) throws IOException {
 		if (hasInformationForChannel(s)) {
 			List<ByteBuffer> socketQueue = queueMap.get(s);
-			if (socketQueue != null) {
+			if (socketQueue != null && !socketQueue.isEmpty()) {
+				System.out.println("Escribiendo: " + new String(socketQueue.get(0).array()));
 				s.write(socketQueue.get(0));
 				if (!socketQueue.get(0).hasRemaining())
 					socketQueue.remove(0);
