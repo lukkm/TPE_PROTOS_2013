@@ -23,6 +23,10 @@ public class ClientHandler implements TCPHandler {
 		config = new HashMap<SocketChannel, ProxyConfiguration>();
 	}
 	
+	/*
+	 * Ver ConcurrentHashMap para ver que socket fue con cada thread	
+	 */
+	
 	@Override
 	public SocketChannel accept(SelectionKey key) throws IOException {
 		SocketChannel clientChannel = ((ServerSocketChannel)key.channel()).accept();

@@ -70,7 +70,17 @@ public class ProxyConfiguration {
 	}
 	
 	public void readFrom(SocketChannel s) throws IOException {
+		/*
+		 * En lugar de usar listas de buffers, usar 2 buffers read/write
+		 * para cada socket y sincronizarlos con los 2 del servidor.
+		 * Ver bien los metodos flip(), compact(), mark(), etc...
+		 */
 		ByteBuffer b = ByteBuffer.allocate(BUFFER_SIZE);
+		/*
+		 * Ver que hago con reads mas grandes que el buffer.
+		 * Inicialmente es transparente, ya que va a volver a entrar con otro read
+		 * Mas adelante hay que ver como procesar esos paquetes.
+		 */
 		int bytesRead = s.read(b);
 		if (bytesRead == -1) {
 			/* EOF - Hay que cerrar el canal */

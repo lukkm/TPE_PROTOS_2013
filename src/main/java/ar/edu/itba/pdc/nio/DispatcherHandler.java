@@ -17,7 +17,7 @@ import ar.edu.itba.pdc.interfaces.TCPHandler;
 public class DispatcherHandler { 
     private static final int TIMEOUT = 3000; 
    
-    Map<AbstractSelectableChannel, TCPHandler> handlerMap;
+    private Map<AbstractSelectableChannel, TCPHandler> handlerMap;
     
     public DispatcherHandler() {
     	handlerMap = new HashMap<AbstractSelectableChannel, TCPHandler>();
@@ -71,15 +71,23 @@ public class DispatcherHandler {
 //        serverChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, serverCallback);
 //        
         while (!Thread.interrupted()) { 
+        	/*
+        	 * Se puede usar syncronized lists (listas con acceso concurrente) para registrar las
+        	 * keys que quieren leer/escribir y aca leer de esa lista y registrar en el selector las 
+        	 * respectivas acciones
+        	 */
             if (selector.select(TIMEOUT) == 0) {
                 System.out.print(selector.keys().size());
                 continue;
             }
-
             Iterator<SelectionKey> keyIter = selector.selectedKeys().iterator();
             while (keyIter.hasNext()) {
                 SelectionKey key = keyIter.next(); 
                 if (key.isAcceptable()) {
+                	/* 
+                	 * Agregar aca los canales al selector, no hay necesidad de hacerlo en el handler
+                	 * el handler no deberia conocer al selector
+                	 */
                 	SocketChannel channel = handlerMap.get(key.channel()).accept(key);
                 	if (channel != null)
                 		handlerMap.put(channel, handlerMap.get(key.channel()));
