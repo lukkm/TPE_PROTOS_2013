@@ -11,16 +11,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ar.edu.itba.pdc.interfaces.TCPHandler;
-import ar.edu.itba.pdc.proxy.ProxyConfiguration;
+import ar.edu.itba.pdc.proxy.ProxyConnection;
 
 public class ClientHandler implements TCPHandler {
 
-	private Map<SocketChannel, ProxyConfiguration> config;
+	private Map<SocketChannel, ProxyConnection> config;
 	private Selector selector;
 	
 	public ClientHandler(Selector selector) {
 		this.selector = selector;
-		config = new HashMap<SocketChannel, ProxyConfiguration>();
+		config = new HashMap<SocketChannel, ProxyConnection>();
 	}
 	
 	/*
@@ -33,7 +33,7 @@ public class ClientHandler implements TCPHandler {
     	clientChannel.configureBlocking(false);
     	clientChannel.register(selector, SelectionKey.OP_READ);
         
-    	config.put(clientChannel, new ProxyConfiguration(clientChannel));
+    	config.put(clientChannel, new ProxyConnection(clientChannel));
     	
     	return clientChannel;
 	}
@@ -41,7 +41,7 @@ public class ClientHandler implements TCPHandler {
 	@Override
 	public SocketChannel read(SelectionKey key) throws IOException {
 		
-		ProxyConfiguration configuration = config.get(key.channel());
+		ProxyConnection configuration = config.get(key.channel());
 		
 		SocketChannel serverChannel = null;
 		
@@ -68,12 +68,12 @@ public class ClientHandler implements TCPHandler {
 
 	@Override
 	public void write(SelectionKey key) throws IOException {
-		ProxyConfiguration configuration = config.get(key.channel());
+		ProxyConnection configuration = config.get(key.channel());
 		configuration.writeTo((SocketChannel)key.channel());
 		updateSelectionKeys(configuration);
 	}
 	
-	private void updateSelectionKeys(ProxyConfiguration configuration) throws ClosedChannelException {
+	private void updateSelectionKeys(ProxyConnection configuration) throws ClosedChannelException {
 		if (configuration.hasInformationForChannel(configuration.getServerChannel())) {
 			configuration.getServerChannel().register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		} else {
