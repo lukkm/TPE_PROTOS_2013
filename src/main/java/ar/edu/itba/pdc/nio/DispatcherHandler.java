@@ -84,16 +84,18 @@ public class DispatcherHandler {
             while (keyIter.hasNext()) {
                 SelectionKey key = keyIter.next(); 
                 if (key.isAcceptable()) {
-                	/* 
-                	 * Agregar aca los canales al selector, no hay necesidad de hacerlo en el handler
-                	 * el handler no deberia conocer al selector
-                	 */
-                	SocketChannel channel = handlerMap.get(key.channel()).accept(key);
-                	if (channel != null)
-                		handlerMap.put(channel, handlerMap.get(key.channel()));
+                	SocketChannel newChannel = ((ServerSocketChannel)key.channel()).accept();
+                	newChannel.configureBlocking(false);
+                	newChannel.register(selector, SelectionKey.OP_READ);
+                	TCPHandler handler = handlerMap.get(key.channel());
+                	handlerMap.put(newChannel, handler);
+                	handler.accept(newChannel);
                 }
 
                 if (key.isReadable()) {
+                	/* 
+                	 * Cambiar el read para que tampoco conozca la key y directamente el add lo haga aca.
+                	 */
                 	SocketChannel channel = handlerMap.get(key.channel()).read(key);
                 	if (channel != null)
                 		handlerMap.put(channel, handlerMap.get(key.channel()));

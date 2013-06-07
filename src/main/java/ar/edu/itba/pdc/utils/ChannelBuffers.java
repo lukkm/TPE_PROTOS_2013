@@ -31,8 +31,6 @@ public class ChannelBuffers {
 	public void synchronizeBuffers(ChannelBuffers channelBuffers) {
 		ByteBuffer wrBuffer = channelBuffers.getWriteBuffer();
 		readBuffer.flip();
-//		System.out.println("Position 1: " + wrBuffer.position());
-//		System.out.println("Limit 1: " + wrBuffer.limit());
 		if (wrBuffer.remaining() > (readBuffer.capacity() - readBuffer.remaining())) {
 			channelBuffers.setWriteBuffer(wrBuffer.put(readBuffer));
 		} else {
@@ -40,10 +38,6 @@ public class ChannelBuffers {
 			channelBuffers.setWriteBuffer(ByteBuffer.allocateDirect(wrBuffer.capacity() * 2).put(wrBuffer).put(readBuffer));
 		}
 		readBuffer.clear();
-//		System.out.println("Position 2: " + wrBuffer.position());
-//		System.out.println("Limit 2: " + wrBuffer.limit());
-//		System.out.println("Has: " + wrBuffer.hasRemaining());
-		
 	}
 	
 }

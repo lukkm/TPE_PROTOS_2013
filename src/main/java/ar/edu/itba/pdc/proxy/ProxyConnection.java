@@ -45,7 +45,7 @@ public class ProxyConnection {
 	}
 	
 	public boolean hasInformationForChannel(SocketChannel s) {
-		return buffersMap.get(s) != null && buffersMap.get(s).getWriteBuffer().capacity() != buffersMap.get(s).getWriteBuffer().re();
+		return buffersMap.get(s) != null && buffersMap.get(s).getWriteBuffer().capacity() != buffersMap.get(s).getWriteBuffer().remaining();
 	}
 	
 	public boolean hasServer() {
@@ -56,11 +56,6 @@ public class ProxyConnection {
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
 			if (channelBuffers != null && channelBuffers.getWriteBuffer().hasRemaining()) {
-				/*if (s == server) 
-					System.out.println("Escrito al server: " + new String(channelBuffers.getWriteBuffer().array()));
-				else 
-					System.out.println("Escrito al cliente: " + new String(channelBuffers.getWriteBuffer().array()));
-				*/ /* Ver porque mierda no se puede hacer el .array() */
 				channelBuffers.getWriteBuffer().flip();
 				int bytesWrote = s.write(channelBuffers.getWriteBuffer());
 				System.out.println("Bytes escritos: " + bytesWrote);
@@ -70,11 +65,6 @@ public class ProxyConnection {
 	}
 	
 	public void readFrom(SocketChannel s) throws IOException {
-		/*
-		 * En lugar de usar listas de buffers, usar 2 buffers read/write
-		 * para cada socket y sincronizarlos con los 2 del servidor.
-		 * Ver bien los metodos flip(), compact(), mark(), etc...
-		 */
 		/*
 		 * Ver que hago con reads mas grandes que el buffer.
 		 * Inicialmente es transparente, ya que va a volver a entrar con otro read
@@ -90,10 +80,10 @@ public class ProxyConnection {
 		}
 		/* Ver logica aca */
 		if (s == client) {
-			System.out.println("Leido del cliente: " + bytesRead);
+			System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getReadBuffer().array()));
 			buffersMap.get(s).synchronizeBuffers(buffersMap.get(server));
 		} else {
-			System.out.println("Leido del servidor: " + bytesRead);
+			System.out.println("Leido del servidor: " + new String(buffersMap.get(s).getReadBuffer().array()));
 			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
 		}
 	}
