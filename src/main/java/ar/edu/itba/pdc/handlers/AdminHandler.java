@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.controllers;
+package ar.edu.itba.pdc.handlers;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ar.edu.itba.pdc.interfaces.TCPHandler;
-import ar.edu.itba.pdc.utils.ChannelBuffers;
+import ar.edu.itba.pdc.proxy.ChannelBuffers;
 
 public class AdminHandler implements TCPHandler {
 

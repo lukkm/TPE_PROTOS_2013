@@ -11,8 +11,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import ar.edu.itba.pdc.controllers.AdminHandler;
-import ar.edu.itba.pdc.controllers.ClientHandler;
+import ar.edu.itba.pdc.handlers.AdminHandler;
+import ar.edu.itba.pdc.handlers.ClientHandler;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 
 public class DispatcherHandler { 
