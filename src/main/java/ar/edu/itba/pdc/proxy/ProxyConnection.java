@@ -39,6 +39,15 @@ public class ProxyConnection {
 		return client;
 	}
 	
+	public ByteBuffer getBuffer(SocketChannel s, BufferType bufType) {
+		if (buffersMap.get(s) == null)
+			return null;
+		if (bufType == BufferType.read)
+			return buffersMap.get(s).getReadBuffer();
+		else
+			return buffersMap.get(s).getWriteBuffer();
+	}
+	
 	public boolean hasClient() {
 		return client != null;
 	}
@@ -51,19 +60,21 @@ public class ProxyConnection {
 		return server != null;
 	}
 	
-	public void writeTo(SocketChannel s) throws IOException {
+	public int writeTo(SocketChannel s) throws IOException {
+		int bytesWrote = 0;
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
 			if (channelBuffers != null && channelBuffers.getWriteBuffer().hasRemaining()) {
 				channelBuffers.getWriteBuffer().flip();
-				int bytesWrote = s.write(channelBuffers.getWriteBuffer());
+				bytesWrote = s.write(channelBuffers.getWriteBuffer());
 				System.out.println("Bytes escritos: " + bytesWrote);
 				channelBuffers.getWriteBuffer().clear();
 			}
 		}
+		return bytesWrote;
 	}
 	
-	public void readFrom(SocketChannel s) throws IOException {
+	public int readFrom(SocketChannel s) throws IOException {
 		/*
 		 * Ver que hago con reads mas grandes que el buffer.
 		 * Inicialmente es transparente, ya que va a volver a entrar con otro read
@@ -85,5 +96,7 @@ public class ProxyConnection {
 			System.out.println("Leido del servidor: " + new String(buffersMap.get(s).getReadBuffer().array()));
 			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
 		}
+		
+		return bytesRead;
 	}
 }
