@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import ar.edu.itba.pdc.controllers.AdminHandler;
 import ar.edu.itba.pdc.controllers.ClientHandler;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 
@@ -48,7 +49,7 @@ public class DispatcherHandler {
         Selector selector = Selector.open();
         
         ClientHandler clientHandler = new ClientHandler(selector);
-
+        AdminHandler adminHandler = new AdminHandler(selector);
         /* Bindear el socket cliente */
         
         ServerSocketChannel clientChannel = ServerSocketChannel.open();
@@ -57,6 +58,12 @@ public class DispatcherHandler {
         clientChannel.register(selector, SelectionKey.OP_ACCEPT);
         handlerMap.put(clientChannel, clientHandler);
         /* Bindear el socket admin */
+        
+        ServerSocketChannel adminChannel = ServerSocketChannel.open();
+        adminChannel.socket().bind(new InetSocketAddress(5679));
+        adminChannel.configureBlocking(false);
+        adminChannel.register(selector, SelectionKey.OP_ACCEPT);
+        handlerMap.put(adminChannel, adminHandler);
         
 //        ServerSocketChannel adminChannel = ServerSocketChannel.open();
 //        adminChannel.socket().bind(new InetSocketAddress(Integer.parseInt(args[1])));
