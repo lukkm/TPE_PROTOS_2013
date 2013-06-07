@@ -45,7 +45,7 @@ public class ProxyConnection {
 	}
 	
 	public boolean hasInformationForChannel(SocketChannel s) {
-		return buffersMap.get(s) != null && buffersMap.get(s).getWriteBuffer().capacity() != buffersMap.get(s).getWriteBuffer().re();
+		return buffersMap.get(s) != null && buffersMap.get(s).getWriteBuffer().capacity() != buffersMap.get(s).getWriteBuffer().remaining();
 	}
 	
 	public boolean hasServer() {
