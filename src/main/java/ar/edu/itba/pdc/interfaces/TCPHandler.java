@@ -6,7 +6,7 @@ import java.nio.channels.SocketChannel;
 
 public interface TCPHandler {
 
-	SocketChannel accept(SelectionKey key) throws IOException;
+	void accept(SocketChannel channel) throws IOException;
 	SocketChannel read(SelectionKey key) throws IOException;
     void write(SelectionKey key) throws IOException;
 	

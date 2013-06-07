@@ -5,7 +5,6 @@ import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,14 +27,8 @@ public class ClientHandler implements TCPHandler {
 	 */
 	
 	@Override
-	public SocketChannel accept(SelectionKey key) throws IOException {
-		SocketChannel clientChannel = ((ServerSocketChannel)key.channel()).accept();
-    	clientChannel.configureBlocking(false);
-    	clientChannel.register(selector, SelectionKey.OP_READ);
-        
-    	config.put(clientChannel, new ProxyConnection(clientChannel));
-    	
-    	return clientChannel;
+	public void accept(SocketChannel channel) throws IOException {
+    	config.put(channel, new ProxyConnection(channel));
 	}
 
 	@Override
