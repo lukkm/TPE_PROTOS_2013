@@ -12,6 +12,9 @@ import org.json.JSONObject;
 
 public class AdminParser {
 
+	private String[] commands = { "silenceuser", "statistics", "getStatistics",
+			"setTransformation", "interval" };
+
 	public static void main(String[] args) throws IOException {
 		AdminParser a = new AdminParser();
 		a.parseCommand(null);
@@ -64,60 +67,46 @@ public class AdminParser {
 		JSONObject jsonObj = null;
 		JSONObject jsonObj2 = null;
 		try {
-			jsonObj = new JSONObject(
-					"{silenceuser:juanjo;}");
-			jsonObj2 = new JSONObject(
-					"{silenceuser:pedro;}");
+			jsonObj = new JSONObject("{silenceuser:juanjo; statistics:luqui}");
+			jsonObj2 = new JSONObject("{silenceuser:pedro; statistics:luqi}");
 		} catch (JSONException e) {
-			e.printStackTrace();
+			System.out.println("Bad JSON Syntaxis");
 		}
 
 		jsonParse(jsonObj);
 		return jsonParse(jsonObj2);
-		
+
 	}
 
 	private boolean jsonParse(JSONObject jsonObject) {
 		Properties p;
 		String[] keys = JSONObject.getNames(jsonObject); // Multiples mensajes
 		for (String string : keys) {
-			try {
-				if (string.compareTo("silenceuser") == 0) {
+			for (String cmd : this.commands) {
+				if (string.compareTo(cmd) == 0) {
 					p = loadFile();
-					String s = p.getProperty("silenceuser");
-					p.setProperty("silenceuser", s+"{"+jsonObject.get("silenceuser")
-							.toString());
-					saveFile(p);
-					return true;
-				}
-				if (string.compareTo("statistics") == 0) {
-					this.loadFile().setProperty("statistics",
-							jsonObject.get("statistics").toString());
-					return true;
-				}
-				if (string.compareTo("getStatistics") == 0) {
-					this.loadFile().setProperty("transformation",
-							jsonObject.get("transformation").toString());
-					return true;
-				}
-				if (string.compareTo("setTransformation") == 0) {
-					this.loadFile().setProperty("silenceuser",
-							jsonObject.get("silenceuser").toString());
-					return true;
-				}
-				if (string.compareTo("silenceuser") == 0) {
+					String s = p.getProperty(cmd);
 
-					this.loadFile().setProperty("silenceuser",
-							jsonObject.get("silenceuser").toString());
-					return true;
+					String t = "";
+					try {
+						t = jsonObject.get(cmd).toString();
+						if (s != null
+								&& s.contains(t.subSequence(0, t.length()))) {
+							break;
+						}
+					} catch (JSONException e) {
+						System.out.println("Error JSON");
+					}
+					System.out.println("s :" + s);
+					System.out.println("t :" + t);
+
+					if (s != null)
+						p.setProperty(cmd, s + ";" + t);
+					else
+						p.setProperty(cmd, t);
+					saveFile(p);
+					break;
 				}
-				if (string.compareTo("silenceuser") == 0) {
-					this.loadFile().setProperty("silenceuser",
-							jsonObject.get("silenceuser").toString());
-					return true;
-				}
-			} catch (JSONException e) {
-				return false;
 			}
 		}
 		return true;
