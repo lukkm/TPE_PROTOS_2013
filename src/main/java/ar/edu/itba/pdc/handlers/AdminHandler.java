@@ -1,6 +1,7 @@
-package ar.edu.itba.pdc.controllers;
+package ar.edu.itba.pdc.handlers;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -9,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ar.edu.itba.pdc.interfaces.TCPHandler;
-import ar.edu.itba.pdc.utils.ChannelBuffers;
+import ar.edu.itba.pdc.proxy.ChannelBuffers;
 
 public class AdminHandler implements TCPHandler {
 
@@ -39,8 +40,11 @@ public class AdminHandler implements TCPHandler {
 	@Override
 	public void write(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel)key.channel();
-		s.write(config.get(s).getWriteBuffer());
+		ByteBuffer wrBuffer = config.get(s).getWriteBuffer();
+		wrBuffer.flip();
+		s.write(wrBuffer);
 		updateSelectionKeys(s);
+		wrBuffer.compact();
 	}
 
 	private void updateSelectionKeys(SocketChannel s) throws ClosedChannelException {
