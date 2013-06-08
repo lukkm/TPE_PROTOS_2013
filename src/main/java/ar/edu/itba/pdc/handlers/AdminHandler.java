@@ -36,9 +36,12 @@ public class AdminHandler implements TCPHandler {
 		SocketChannel s = (SocketChannel) key.channel();
 		ChannelBuffers channelBuffers = config.get(s);
 		s.read(channelBuffers.getReadBuffer());
-		parseCommand(channelBuffers.getReadBuffer());
-		// channelBuffers.autoSynchronizeBuffers();
 
+		if (!parser.parseCommand(channelBuffers.getReadBuffer()))
+			System.out.println("Mala sintaxis");
+
+		// parseCommand(channelBuffers.getReadBuffer());
+		// channelBuffers.autoSynchronizeBuffers();
 		// String strCommand = new
 		// String(channelBuffers.getReadBuffer().array());
 
@@ -46,8 +49,6 @@ public class AdminHandler implements TCPHandler {
 		updateSelectionKeys(s);
 		return null;
 	}
-
-	
 
 	@Override
 	public void write(SelectionKey key) throws IOException {

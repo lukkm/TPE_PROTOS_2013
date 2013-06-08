@@ -4,11 +4,13 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class AdminParser {
 
 	private Properties loadParser() {
 		final Properties props = new Properties();
-
 		try {
 			String current = new java.io.File(".").getCanonicalPath();
 			FileInputStream fis = new FileInputStream(current
@@ -21,8 +23,50 @@ public class AdminParser {
 		return props;
 	}
 
-	private void parseCommand(ByteBuffer readBuffer) {
-		String str = new String(readBuffer.array());
-		this.loadParser().setProperty(key, value);
+	public boolean parseCommand(ByteBuffer readBuffer) {
+		JSONObject str = new JSONObject(readBuffer.array());
+		return jsonParse(str);
+
+	}
+
+	private boolean jsonParse(JSONObject str) {
+		String[] keys = JSONObject.getNames(str);
+		for (String string : keys) {
+			try {
+				if (string.compareTo("silenceuser") == 0) {
+					this.loadParser().setProperty("silenceuser",
+							str.get("silenceuser").toString());
+					return true;
+				}
+				if (string.compareTo("statistics") == 0) {
+					this.loadParser().setProperty("statistics",
+							str.get("silenceuser").toString());
+					return true;
+				}
+				if (string.compareTo("silenceuser") == 0) {
+					this.loadParser().setProperty("silenceuser",
+							str.get("silenceuser").toString());
+					return true;
+				}
+				if (string.compareTo("silenceuser") == 0) {
+					this.loadParser().setProperty("silenceuser",
+							str.get("silenceuser").toString());
+					return true;
+				}
+				if (string.compareTo("silenceuser") == 0) {
+					this.loadParser().setProperty("silenceuser",
+							str.get("silenceuser").toString());
+					return true;
+				}
+				if (string.compareTo("silenceuser") == 0) {
+					this.loadParser().setProperty("silenceuser",
+							str.get("silenceuser").toString());
+					return true;
+				}
+			} catch (JSONException e) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
