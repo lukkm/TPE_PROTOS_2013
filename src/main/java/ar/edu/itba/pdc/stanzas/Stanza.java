@@ -1,12 +1,10 @@
 package ar.edu.itba.pdc.stanzas;
 
-import java.nio.ByteBuffer;
-
 import ar.edu.itba.pdc.jabber.JabberElement;
+import ar.edu.itba.pdc.jabber.Message;
 
 public class Stanza {
 
-	private ByteBuffer buffer;
 	private StanzaType type;
 	private boolean completed;
 	private JabberElement element;
@@ -15,14 +13,13 @@ public class Stanza {
 		this.completed = false;
 	}
 	
-	public Stanza(ByteBuffer buffer, StanzaType type) {
+	public Stanza(StanzaType type) {
 		this();
-		this.buffer = buffer;
 		this.type = type;
 	}
 	
-	public Stanza(ByteBuffer buffer, StanzaType type, JabberElement element) {
-		this(buffer, type);
+	public Stanza(StanzaType type, JabberElement element) {
+		this(type);
 		this.element = element;
 	}
 	
@@ -38,20 +35,23 @@ public class Stanza {
 		this.type = type;
 	}
 	
-	public void setBuffer(ByteBuffer buffer) {
-		this.buffer = buffer;
-	}
-	
 	public boolean isComplete() {
 		return completed;
 	}
 	
+	public boolean isMessage() {
+		return element != null && element.getClass() == Message.class;
+	}
+	
+	public JabberElement getElement() {
+		return element;
+	}
+	
 	@Override
 	public String toString() {
-		if (buffer != null)
-			return new String(buffer.array());
-		else
+		if (element != null)
 			return element.toString();
+		return "Default Stanza";
 	}
 	
 	public void setElement(JabberElement element) {

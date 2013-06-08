@@ -40,9 +40,10 @@ public class ChannelBuffers {
 				.remaining())) {
 			channelBuffers.setWriteBuffer(wrBuffer.put(readBuffer));
 		} else {
+			int rel = readBuffer.capacity() / wrBuffer.capacity();
 			wrBuffer.flip();
 			channelBuffers.setWriteBuffer(ByteBuffer
-					.allocateDirect(wrBuffer.capacity() * 2).put(wrBuffer)
+					.allocateDirect(wrBuffer.capacity() * ((rel >= 1) ? rel : 2)).put(wrBuffer)
 					.put(readBuffer));
 		}
 		readBuffer.clear();

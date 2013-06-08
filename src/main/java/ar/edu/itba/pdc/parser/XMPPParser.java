@@ -13,11 +13,12 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
 
+import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPParser {
 
-	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws ParserConfigurationException, SAXException, IOException {
+	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws ParserConfigurationException, IOException, IncompleteElementsException {
 		
 		/* Medio feo, ver como se soluciona */
 		String xmlString = new String(xmlStream.array()).substring(0, length);
@@ -30,19 +31,23 @@ public class XMPPParser {
 			/* Cambiar, atado a la implementacion anterior */
 			String newString = "<xmpp-proxy>" + xmlString + "</xmpp-proxy>";
 			byte[] xmlBytes = newString.getBytes();
+			System.out.println("Parsing XML: " + newString);
 			InputStream is = new ByteArrayInputStream(xmlBytes);
 			SAXParserFactory factory = SAXParserFactory.newInstance();
-		    factory.setNamespaceAware(true);
+		    factory.setNamespaceAware(false);
 		    factory.setValidating(false);
 		    SAXParser parser;
-		    /* Ver de usar XMLReader */
-			parser = factory.newSAXParser();
-			XMPPHandler handler = new XMPPHandler();
-			System.out.println("-----------------------------------------------");
-			System.out.println("Parsing XML: " + newString);
-			System.out.println("-----------------------------------------------");
-			parser.parse(is, handler);
-			return handler.getStanzaList();
+			try {
+				parser = factory.newSAXParser();
+				XMPPHandler handler = new XMPPHandler();
+				parser.parse(is, handler);
+				if (handler.hasIncompleteElements()) {
+					throw new IncompleteElementsException();
+				}
+				return handler.getStanzaList();
+			} catch (SAXException e) {
+				throw new IncompleteElementsException();
+			}
 		}
 	   
 	}
