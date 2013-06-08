@@ -26,12 +26,10 @@ public class AdminHandler implements TCPHandler {
 		config = new HashMap<SocketChannel, ChannelBuffers>();
 	}
 
-	@Override
 	public void accept(SocketChannel channel) throws IOException {
 		config.put(channel, new ChannelBuffers());
 	}
 
-	@Override
 	public SocketChannel read(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel) key.channel();
 		ChannelBuffers channelBuffers = config.get(s);
@@ -50,7 +48,6 @@ public class AdminHandler implements TCPHandler {
 		return null;
 	}
 
-	@Override
 	public void write(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel) key.channel();
 		ByteBuffer wrBuffer = config.get(s).getWriteBuffer();
