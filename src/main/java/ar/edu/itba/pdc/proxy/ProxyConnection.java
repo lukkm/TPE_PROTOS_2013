@@ -14,6 +14,8 @@ public class ProxyConnection {
 	private SocketChannel server = null;
 	private SocketChannel client = null;
 	
+	private int storedBytes = 0;
+	
 	private Map<SocketChannel, ChannelBuffers> buffersMap = new HashMap<SocketChannel, ChannelBuffers>();
 	
 	public ProxyConnection(SocketChannel server, SocketChannel client) {
@@ -31,6 +33,22 @@ public class ProxyConnection {
 		buffersMap.put(server, new ChannelBuffers(ByteBuffer.allocate(BUFFER_SIZE), ByteBuffer.allocate(BUFFER_SIZE)));
 	}
 	
+	public void storeBytes(int bytes) {
+		this.storedBytes += bytes;
+	}
+	
+	public void clearStoredBytes() {
+		this.storedBytes = 0;
+	}
+	
+	public int getStoredBytes() {
+		return storedBytes;
+	}
+	
+	public boolean hasStoredBytes() {
+		return storedBytes > 0;
+	}
+	
 	public SocketChannel getServerChannel() {
 		return server;
 	}
@@ -45,10 +63,12 @@ public class ProxyConnection {
 			ByteBuffer buf = buffers.getReadBuffer();
 			buf.flip();
 			buffers.setReadBuffer(ByteBuffer.allocate(buf.capacity() * 2).put(buf));
+			System.out.println("Quedo en el buffer read: " + new String(buffers.getReadBuffer().array()));
 		} else {
 			ByteBuffer buf = buffers.getWriteBuffer();
 			buf.flip();
 			buffers.setWriteBuffer(ByteBuffer.allocate(buf.capacity() * 2).put(buf));
+			System.out.println("Quedo en el buffer write: " + new String(buffers.getWriteBuffer().array()));
 		}
 	}
 	
@@ -102,14 +122,14 @@ public class ProxyConnection {
 			/* Aca vemos q hacemos */
 		}
 		/* Ver logica aca */
-		if (s == client) {
-			System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getReadBuffer().array()));
-			buffersMap.get(s).synchronizeBuffers(buffersMap.get(server));
-		} else {
-			System.out.println("Leido del servidor: " + new String(buffersMap.get(s).getReadBuffer().array()));
-			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
-		}
 		
 		return bytesRead;
+	}
+	
+	public void synchronizeChannelBuffers(SocketChannel s) {
+		if (s == client)
+			buffersMap.get(s).synchronizeBuffers(buffersMap.get(server));
+		else
+			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
 	}
 }
