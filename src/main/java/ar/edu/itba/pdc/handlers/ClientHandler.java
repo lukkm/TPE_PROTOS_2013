@@ -70,7 +70,9 @@ public class ClientHandler implements TCPHandler {
 		/* Parse what was just read */
 		try {
 			List<Stanza> stanzaList = parser.parse(connection.getBuffer(s, BufferType.read), bytes);
-		} catch (SAXException | ParserConfigurationException e) {
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
 		}
 		
