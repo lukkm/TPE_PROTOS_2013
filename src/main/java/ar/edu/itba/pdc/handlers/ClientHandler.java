@@ -36,12 +36,10 @@ public class ClientHandler implements TCPHandler {
 	 * Ver ConcurrentHashMap para ver que socket fue con cada thread	
 	 */
 	
-	@Override
 	public void accept(SocketChannel channel) throws IOException {
     	connections.put(channel, new ProxyConnection(channel));
 	}
 
-	@Override
 	public SocketChannel read(SelectionKey key) throws IOException {
 		
 		SocketChannel s = (SocketChannel)key.channel();
@@ -101,7 +99,6 @@ public class ClientHandler implements TCPHandler {
 		
 	}
 
-	@Override
 	public void write(SelectionKey key) throws IOException {
 		ProxyConnection connection = connections.get(key.channel());
 		connection.writeTo((SocketChannel)key.channel());
