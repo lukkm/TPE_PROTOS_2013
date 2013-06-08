@@ -11,7 +11,7 @@ import ar.edu.itba.pdc.interfaces.CommunicationProtocol;
 public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol {
     private int bufSize; 
     private boolean hasInformation = false;
-    private ByteBuffer pendingInformation;
+    private ByteBuffer pendingInformation = ByteBuffer.allocate(50000);
     private CommunicationProtocol serverConnector;
     private SelectionKey clientSelectionKey;
     
@@ -49,11 +49,11 @@ public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol 
         //ByteBuffer buf = (ByteBuffer) key.attachment();
 //        pendingInformation.flip();
         SocketChannel clntChan = (SocketChannel) key.channel();
-        System.out.println("Sending to client: " + new String(pendingInformation.array()) + "\n");
-        if (hasInformation)
+        while(pendingInformation.hasRemaining()) {
+        	System.out.println("Sending to client: " + new String(pendingInformation.array()) + "\n");
         	clntChan.write(pendingInformation);
-        //pendingInformation.clear();
-        hasInformation = false;
+    	}
+        	//pendingInformation.clear();
         key.interestOps(SelectionKey.OP_READ);
 //        pendingInformation.compact();
     }
@@ -61,9 +61,7 @@ public class EchoSelectorProtocol implements TCPProtocol, CommunicationProtocol 
 	@Override
 	public void communicate(ByteBuffer message) {
 		if (clientSelectionKey != null) {
-			while (hasInformation);
-			pendingInformation = message;
-			hasInformation = true;
+			pendingInformation.put(message);
 			clientSelectionKey.interestOps(SelectionKey.OP_WRITE);
 		} else {
 			System.out.println("Mensaje irrelevante de juanjo: " + new String(message.array()));

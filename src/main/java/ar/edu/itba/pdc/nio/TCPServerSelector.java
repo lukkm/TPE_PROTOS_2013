@@ -10,7 +10,7 @@ import java.util.Iterator;
 import ar.edu.itba.pdc.server.ServerProtocol;
 
 public class TCPServerSelector {
-    private static final int BUFSIZE = 10000; 
+    private static final int BUFSIZE = 50000; 
     private static final int TIMEOUT = 3000; 
 
     public static void main(String[] args) throws IOException {

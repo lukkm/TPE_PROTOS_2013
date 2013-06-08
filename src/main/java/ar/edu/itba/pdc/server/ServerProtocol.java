@@ -10,7 +10,7 @@ import ar.edu.itba.pdc.interfaces.CommunicationProtocol;
 public class ServerProtocol implements CommunicationProtocol {
 
 	private CommunicationProtocol clientProtocol;
-	private ByteBuffer writeBuf;
+	private ByteBuffer writeBuf = ByteBuffer.allocate(50000);
 	private boolean hasInformation = false;
 	
 	public void setClientProtocol(CommunicationProtocol clientProtocol) {		
@@ -43,11 +43,11 @@ public class ServerProtocol implements CommunicationProtocol {
 							}
 						}
 						if (hasInformation) {
-							System.out.println("Sending to hermes: " + new String(writeBuf.array()) + "\n");
 							while(writeBuf.hasRemaining()) {
-								srvChan.write(writeBuf);
+								System.out.println("Sending to hermes: " + new String(writeBuf.array()) + "\n");
+								int i = srvChan.write(writeBuf);
+								writeBuf.position(writeBuf.position() + i);
 							}
-							//writeBuf.clear();
 							hasInformation = false;
 						}
 					} catch (IOException e) {
@@ -61,8 +61,7 @@ public class ServerProtocol implements CommunicationProtocol {
 	
 	@Override
 	public void communicate(ByteBuffer message) {
-		while(hasInformation);
-		this.writeBuf = message;
+		this.writeBuf.put(message);
 //		message.clear();
 		this.hasInformation = true;
 	}	
