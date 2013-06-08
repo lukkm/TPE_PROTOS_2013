@@ -12,9 +12,9 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.xml.sax.SAXException;
-
+import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
+import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
@@ -66,16 +66,35 @@ public class ClientHandler implements TCPHandler {
 		int bytes = connection.readFrom(s);
 		
 		/* Parse what was just read */
+		List<Stanza> stanzaList = null;
+		try {
+			stanzaList = parser.parse(connection.getBuffer(s, BufferType.read), connection.getStoredBytes() + bytes);
+			connection.clearStoredBytes();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (IncompleteElementsException e) {
+			connection.expandBuffer(s, BufferType.read);
+			connection.storeBytes(bytes);
+		}
+		
+		if (stanzaList != null) {
+			for (Stanza stanza : stanzaList) {
+				if (stanza.isMessage()) {
+					Message message = (Message)stanza.getElement();
+					System.out.println("<--------------------------- MESSAGE --------------------------->");
+					System.out.println("From: " + message.getFrom());
+					System.out.println("To: " + message.getTo());
+					System.out.println("Body: " + message.getMessage());
+					System.out.println("<--------------------------------------------------------------->");
+				}
+			}
+		}
+		
+		if (!connection.hasStoredBytes()) {
+			connection.synchronizeChannelBuffers(s);
+			updateSelectionKeys(connection);
+		}
 
-//		try {
-//			List<Stanza> stanzaList = parser.parse(connection.getBuffer(s, BufferType.read), bytes);
-//		} catch (SAXException e) {
-//			e.printStackTrace();
-//		} catch (ParserConfigurationException e) {
-//			e.printStackTrace();
-//		}
-
-		updateSelectionKeys(connection);
 		return serverChannel;
 		
 	}
