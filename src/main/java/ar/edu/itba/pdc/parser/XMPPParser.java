@@ -17,7 +17,7 @@ import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPParser {
 
-	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws SAXException, IOException, ParserConfigurationException {
+	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws ParserConfigurationException, SAXException, IOException {
 		
 		/* Medio feo, ver como se soluciona */
 		String xmlString = new String(xmlStream.array()).substring(0, length);
@@ -28,17 +28,23 @@ public class XMPPParser {
 			return new LinkedList<Stanza>();
 		} else {		
 			/* Cambiar, atado a la implementacion anterior */
-			byte[] xmlBytes = xmlString.getBytes();
+			String newString = "<xmpp-proxy>" + xmlString + "</xmpp-proxy>";
+			byte[] xmlBytes = newString.getBytes();
 			InputStream is = new ByteArrayInputStream(xmlBytes);
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 		    factory.setNamespaceAware(true);
 		    factory.setValidating(false);
-		    SAXParser parser = factory.newSAXParser();
-		    XMPPHandler handler = new XMPPHandler();
-		    parser.parse(is, handler);
-		    return handler.getStanzaList();
+		    SAXParser parser;
+		    /* Ver de usar XMLReader */
+			parser = factory.newSAXParser();
+			XMPPHandler handler = new XMPPHandler();
+			System.out.println("-----------------------------------------------");
+			System.out.println("Parsing XML: " + newString);
+			System.out.println("-----------------------------------------------");
+			parser.parse(is, handler);
+			return handler.getStanzaList();
 		}
-		    
+	   
 	}
 	
 	

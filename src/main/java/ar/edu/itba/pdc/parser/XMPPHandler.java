@@ -21,20 +21,21 @@ public class XMPPHandler extends DefaultHandler {
 	}
 	
 	public void startElement(String s, String s1, String elementName, Attributes attributes) throws SAXException {
-		 if (indentCount == 0) {
+		 if (indentCount == 1) {
 			 currentStanza = new Stanza();
 			 stanzas.add(currentStanza);
+			 System.out.println("Creada stanza: " + elementName);
 		 } 
 		 indentCount++;
 		 
-		 System.out.println("Elemento: " + elementName);
+		 //System.out.println("Elemento: " + elementName);
 		 /* Procesar segun el tipo de elemento */
 		 
 	}	
 	 
 	public void endElement(String s, String s1, String element) throws SAXException {
 		 indentCount--;
-		 if (indentCount == 0) 
+		 if (indentCount == 1) 
 			 currentStanza.complete();
 	}
 	
