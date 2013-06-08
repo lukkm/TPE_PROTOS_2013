@@ -68,11 +68,11 @@ public class ClientHandler implements TCPHandler {
 		int bytes = connection.readFrom(s);
 		
 		/* Parse what was just read */
-		try {
-			List<Stanza> stanzaList = parser.parse(connection.getBuffer(s, BufferType.read), bytes);
-		} catch (SAXException | ParserConfigurationException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			List<Stanza> stanzaList = parser.parse(connection.getBuffer(s, BufferType.read), bytes);
+//		} catch (SAXException | ParserConfigurationException e) {
+//			connection.expandBuffer(s, BufferType.read);
+//		}
 		
 		updateSelectionKeys(connection);
 		return serverChannel;

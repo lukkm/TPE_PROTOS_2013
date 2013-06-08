@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class ProxyConnection {
 
-	private static final int BUFFER_SIZE = 1024;
+	private static final int BUFFER_SIZE = 4096;
 	
 	private SocketChannel server = null;
 	private SocketChannel client = null;
@@ -37,6 +37,19 @@ public class ProxyConnection {
 	
 	public SocketChannel getClientChannel() {
 		return client;
+	}
+	
+	public void expandBuffer(SocketChannel s, BufferType type) {
+		ChannelBuffers buffers = buffersMap.get(s);
+		if (type == BufferType.read) {
+			ByteBuffer buf = buffers.getReadBuffer();
+			buf.flip();
+			buffers.setReadBuffer(ByteBuffer.allocate(buf.capacity() * 2).put(buf));
+		} else {
+			ByteBuffer buf = buffers.getWriteBuffer();
+			buf.flip();
+			buffers.setWriteBuffer(ByteBuffer.allocate(buf.capacity() * 2).put(buf));
+		}
 	}
 	
 	public ByteBuffer getBuffer(SocketChannel s, BufferType bufType) {
