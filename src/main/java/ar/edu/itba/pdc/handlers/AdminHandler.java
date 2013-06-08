@@ -1,6 +1,5 @@
 package ar.edu.itba.pdc.handlers;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -9,7 +8,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.parser.AdminParser;

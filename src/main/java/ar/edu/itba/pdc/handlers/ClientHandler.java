@@ -7,18 +7,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
 
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.parser.XMPPParser;
-import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
-import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class ClientHandler implements TCPHandler {
 
