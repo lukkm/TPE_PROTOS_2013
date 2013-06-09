@@ -5,7 +5,6 @@ import java.util.Set;
 
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.stanzas.Stanza;
-import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class SilentUsersFilter implements Filter{
 
@@ -14,10 +13,6 @@ public class SilentUsersFilter implements Filter{
 	public SilentUsersFilter() {
 		if (mapOfSilence == null)
 			mapOfSilence = new HashSet<String>();
-		String silentUsers = ConfigurationCommands.getInstance().getProperty("silenceuser");
-		for (String s : silentUsers.split(";")) {
-			addSilencedUser(s);
-		}
 	}
 
 	public void addSilencedUser(String jid) {
@@ -39,15 +34,11 @@ public class SilentUsersFilter implements Filter{
 		if (stanza.isMessage()) {
 			Message msg = ((Message)stanza.getElement());
 			String from = msg.getFrom();
-			for (String s : mapOfSilence) {
-				if (from.contains(s) && s.length() > 0) {
-					msg.setTo(from);
-					msg.setFrom("admin@xmpp-proxy");
-					msg.setMessage("You have been silenced!");
-					stanza.reject();
-					System.out.println("Rejecting user");
-					return;
-				}
+			if (mapOfSilence.contains(from)) {
+				msg.setTo(from);
+				msg.setFrom("admin@xmpp-proxy");
+				msg.setMessage("You have been silenced!");
+				stanza.reject();
 			}
 		}
 	}
