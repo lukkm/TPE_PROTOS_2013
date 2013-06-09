@@ -8,11 +8,12 @@ import ar.edu.itba.pdc.jabber.Presence;
 public class Stanza {
 
 	private StanzaType type;
-	private boolean completed;
+	private boolean completed, rejected;
 	private JabberElement element;
 	
 	public Stanza() {
 		this.completed = false;
+		this.rejected = false;
 	}
 	
 	public Stanza(StanzaType type) {
@@ -66,6 +67,14 @@ public class Stanza {
 	
 	public void setElement(JabberElement element) {
 		this.element = element;
+	}
+	
+	public void reject() {
+		this.rejected = true;
+	}
+	
+	public boolean rejected() {
+		return rejected;
 	}
 	
 }
