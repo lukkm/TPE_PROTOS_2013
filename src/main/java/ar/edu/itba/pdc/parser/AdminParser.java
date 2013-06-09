@@ -72,6 +72,7 @@ public class AdminParser {
 		try {
 			newValue = jsonObject.get(cmd).toString();
 			if (oldValue != null && oldValue.contains(newValue)) {
+				return false;
 			}
 		} catch (JSONException e) {
 			System.out.println("Error JSON");
