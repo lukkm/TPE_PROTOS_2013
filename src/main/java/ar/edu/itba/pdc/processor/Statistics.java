@@ -30,10 +30,9 @@ public class Statistics implements Filter{
 		try {
 			FileWriter fstream = new FileWriter("~/ProxyGlobalStatistics" + System.currentTimeMillis() + ".txt");
 			BufferedWriter out = new BufferedWriter(fstream);
-//			out.write("Global Accesses to the proxy:" + globalAccess);
-			for (PersonalStatistic ps : usersStatistics) {
-				/* logica sacar estadistica */
-			}
+//			for (PersonalStatistic ps : usersStatistics) {
+//				
+//			}
 			out.close();
 		} catch (Exception e) {
 			System.err.println("Error: " + e.getMessage());
