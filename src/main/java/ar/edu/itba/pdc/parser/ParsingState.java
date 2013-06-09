@@ -1,6 +1,10 @@
 package ar.edu.itba.pdc.parser;
 
 public enum ParsingState {
+	noState,
 	parsingStart,
-	messageBody
+	messageBody,
+	waitingClientAuthResponse,
+	authBody,
+	presenceDelay
 }

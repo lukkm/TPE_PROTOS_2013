@@ -16,6 +16,8 @@ public class ProxyConnection {
 	
 	private int storedBytes = 0;
 	
+	private String clientJID = null;
+	
 	private Map<SocketChannel, ChannelBuffers> buffersMap = new HashMap<SocketChannel, ChannelBuffers>();
 	
 	public ProxyConnection(SocketChannel server, SocketChannel client) {
@@ -115,6 +117,11 @@ public class ProxyConnection {
 		 */
 		
 		int bytesRead = s.read(buffersMap.get(s).getReadBuffer());
+
+		if (s == client)
+			System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getReadBuffer().array()).substring(0, bytesRead));
+		else
+			System.out.println("Leido del server: " + new String(buffersMap.get(s).getReadBuffer().array()).substring(0, bytesRead));
 		
 		if (bytesRead == -1) {
 			/* EOF - Hay que cerrar el canal */
@@ -131,5 +138,13 @@ public class ProxyConnection {
 			buffersMap.get(s).synchronizeBuffers(buffersMap.get(server));
 		else
 			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
+	}
+
+	public String getClientJID() {
+		return clientJID;
+	}
+
+	public void setClientJID(String clientJID) {
+		this.clientJID = clientJID;
 	}
 }

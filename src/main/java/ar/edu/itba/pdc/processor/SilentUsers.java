@@ -3,7 +3,10 @@ package ar.edu.itba.pdc.processor;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SilentUsers {
+import ar.edu.itba.pdc.jabber.Message;
+import ar.edu.itba.pdc.stanzas.Stanza;
+
+public class SilentUsers implements Filter{
 
 	private Set<String> mapOfSilence = null;
 
@@ -12,7 +15,7 @@ public class SilentUsers {
 			mapOfSilence = new HashSet<String>();
 	}
 
-	public void addSilentUser(String jid) {
+	public void addSilencedUser(String jid) {
 		if (mapOfSilence != null) {
 			mapOfSilence.add(jid);
 		}
@@ -26,4 +29,12 @@ public class SilentUsers {
 		if (mapOfSilence != null)
 			mapOfSilence.remove(jid);
 	}
+
+	public void applyFilter(Stanza stanza) {
+		if (stanza.isMessage() && mapOfSilence.contains(((Message) stanza.getElement()).getFrom())) {
+			
+		}
+	}
+	
+	
 }

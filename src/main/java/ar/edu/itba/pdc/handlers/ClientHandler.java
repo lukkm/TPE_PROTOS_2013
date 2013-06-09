@@ -14,7 +14,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
+import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.Message;
+import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
@@ -86,6 +88,19 @@ public class ClientHandler implements TCPHandler {
 					System.out.println("To: " + message.getTo());
 					System.out.println("Body: " + message.getMessage());
 					System.out.println("<--------------------------------------------------------------->");
+				} else if (stanza.isJIDConfiguration()) {
+					JIDConfiguration jid = (JIDConfiguration)stanza.getElement();
+					connection.setClientJID(jid.getJID());
+					System.out.println("<--------------------------- JID CONFIGURATION --------------------------->");
+					System.out.println("JID: " + jid.getJID());
+					System.out.println("<------------------------------------------------------------------------->");
+				} else if (stanza.isPresence()) {
+					Presence presence = (Presence)stanza.getElement();
+					System.out.println("<--------------------------- PRESENCE --------------------------->");
+					System.out.println("From: " + presence.getFrom());
+					System.out.println("To: " + presence.getTo());
+					System.out.println("Type: " + presence.getType());
+					System.out.println("<---------------------------------------------------------------->");
 				}
 			}
 		}

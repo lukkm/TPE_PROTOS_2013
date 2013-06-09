@@ -9,17 +9,22 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.JSONException;
+
 import ar.edu.itba.pdc.interfaces.TCPHandler;
+import ar.edu.itba.pdc.parser.AdminParser;
 import ar.edu.itba.pdc.proxy.ChannelBuffers;
 
 public class AdminHandler implements TCPHandler {
 
 	private Map<SocketChannel, ChannelBuffers> config;
 	private Selector selector;
+	private AdminParser parser;
 
 	public AdminHandler(Selector selector) {
 		this.selector = selector;
 		config = new HashMap<SocketChannel, ChannelBuffers>();
+		parser = new AdminParser();
 	}
 
 	public void accept(SocketChannel channel) throws IOException {
@@ -27,16 +32,28 @@ public class AdminHandler implements TCPHandler {
 	}
 
 	public SocketChannel read(SelectionKey key) throws IOException {
-		SocketChannel s = (SocketChannel)key.channel();
+		SocketChannel s = (SocketChannel) key.channel();
 		ChannelBuffers channelBuffers = config.get(s);
 		s.read(channelBuffers.getReadBuffer());
-		channelBuffers.autoSynchronizeBuffers();
+
+		try {
+			if (!parser.parseCommand(channelBuffers.getReadBuffer()))
+				System.out.println("Mala sintaxis");
+		} catch (JSONException e) {
+			System.out.println("Bad syntax");
+		}
+		// parseCommand(channelBuffers.getReadBuffer());
+		// channelBuffers.autoSynchronizeBuffers();
+		// String strCommand = new
+		// String(channelBuffers.getReadBuffer().array());
+
+		channelBuffers.getReadBuffer().clear();
 		updateSelectionKeys(s);
 		return null;
 	}
 
 	public void write(SelectionKey key) throws IOException {
-		SocketChannel s = (SocketChannel)key.channel();
+		SocketChannel s = (SocketChannel) key.channel();
 		ByteBuffer wrBuffer = config.get(s).getWriteBuffer();
 		wrBuffer.flip();
 		s.write(wrBuffer);
@@ -44,9 +61,11 @@ public class AdminHandler implements TCPHandler {
 		wrBuffer.compact();
 	}
 
-	private void updateSelectionKeys(SocketChannel s) throws ClosedChannelException {
+	private void updateSelectionKeys(SocketChannel s)
+			throws ClosedChannelException {
 		ChannelBuffers buffers = config.get(s);
-		if (buffers.getWriteBuffer().capacity() != buffers.getWriteBuffer().remaining()) {
+		if (buffers.getWriteBuffer().capacity() != buffers.getWriteBuffer()
+				.remaining()) {
 			s.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		} else {
 			s.register(selector, SelectionKey.OP_READ);
