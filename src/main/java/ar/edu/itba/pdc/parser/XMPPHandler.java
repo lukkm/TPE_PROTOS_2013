@@ -101,7 +101,7 @@ public class XMPPHandler extends DefaultHandler {
 	}
 	
 	public boolean hasIncompleteElements() {
-		return !currentStanza.isComplete();
+		return currentStanza == null || !currentStanza.isComplete();
 	}
 	
 	public void setState(ParsingState state) {
