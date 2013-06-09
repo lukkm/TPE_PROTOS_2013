@@ -22,6 +22,7 @@ public class AdminHandler implements TCPHandler {
 	public AdminHandler(Selector selector) {
 		this.selector = selector;
 		config = new HashMap<SocketChannel, ChannelBuffers>();
+		parser = new AdminParser();
 	}
 
 	public void accept(SocketChannel channel) throws IOException {

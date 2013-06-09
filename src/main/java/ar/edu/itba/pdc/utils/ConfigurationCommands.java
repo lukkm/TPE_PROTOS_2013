@@ -7,7 +7,15 @@ public class ConfigurationCommands {
 	private Properties props;
 	private FileInputStream fis;
 
-	public ConfigurationCommands() {
+	private static ConfigurationCommands instance;
+	
+	public static ConfigurationCommands getInstance() {
+		if (instance == null) 
+			instance = new ConfigurationCommands();
+		return instance;
+	}
+	
+	private ConfigurationCommands() {
 		this.props = new Properties();
 		try {
 			String current = new java.io.File(".").getCanonicalPath();
@@ -17,24 +25,16 @@ public class ConfigurationCommands {
 			props.load(fis);
 
 		} catch (Exception e) {
-			System.out.println("IO Error"); // TODO
+			System.out.println("IO Error");
 		}
 	}
 
-	public String getStatistic() {
-		return props.get("statistics").toString();
+	public String getProperty(String property) {
+		return props.get(property).toString();
 	}
 
-	public String getSilencedUsers() {
-		return props.get("silencedusers").toString();
-	}
-
-	public String getTransformation() {
-		return props.get("transformations").toString();
-	}
-
-	public String getInterval() {
-		return props.get("interval").toString();
+	public void setProperty(String property, String value) {
+		props.setProperty(property, value);
 	}
 
 }
