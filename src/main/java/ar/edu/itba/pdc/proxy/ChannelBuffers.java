@@ -56,4 +56,18 @@ public class ChannelBuffers {
 	public void autoSynchronizeBuffers() {
 		synchronizeBuffers(this);
 	}
+	
+	public void writeToBuffer(BufferType type, byte[] bytes) {
+		ByteBuffer buf = (type == BufferType.read) ? readBuffer : writeBuffer;
+		if(buf.capacity() - buf.remaining() < bytes.length) {
+			buf.flip();
+			buf = ByteBuffer.allocate(buf.capacity() + bytes.length).put(buf);
+			if (type == BufferType.read) {
+				setReadBuffer(buf);
+			} else {
+				setWriteBuffer(buf);
+			}
+		}
+		buf.put(bytes);
+	}
 }

@@ -33,6 +33,8 @@ public class ConfigurationCommands {
 	}
 
 	public String getProperty(String property) {
+		if (props.get(property) == null)
+			return "";
 		return props.get(property).toString();
 	}
 

@@ -20,8 +20,7 @@ import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.processor.Filter;
-import ar.edu.itba.pdc.processor.SilentUsers;
-import ar.edu.itba.pdc.processor.Statistics;
+import ar.edu.itba.pdc.processor.SilentUsersFilter;
 import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 import ar.edu.itba.pdc.stanzas.Stanza;
@@ -42,8 +41,8 @@ public class ClientHandler implements TCPHandler {
 	}
 	
 	private void initialize() {
-		filterList.add(new SilentUsers());
-		filterList.add(new Statistics());
+		filterList.add(new SilentUsersFilter());
+//		filterList.add(new StatisticsFilter());
 	}
 	
 	/*
@@ -85,13 +84,28 @@ public class ClientHandler implements TCPHandler {
 			stanzaList = parser.parse(connection.getBuffer(s, BufferType.read), connection.getStoredBytes() + bytes);
 			connection.clearStoredBytes();
 			for (Stanza stanza : stanzaList) {
+				if (stanza.isMessage()) {
+					Message msg = (Message)stanza.getElement();
+					if (msg.getFrom() == null)
+						msg.setFrom(connection.getClientJID());
+				}
 				for (Filter f : filterList) {
-					f.applyFilter(stanza);
+					f.apply(stanza);
 				}
 				if (stanza.isMessage()) {
 					if (((Message)stanza.getElement()).getTo().contains(connection.getClientJID())) {
-						sendSilencedMessage(s, connection, stanza);
-						return null;
+						if (stanza.rejected()) {							
+							sendMessage(s, connection, stanza);
+							updateSelectionKeys(connection);
+							return null;
+						} else {
+							if (s == connection.getClientChannel()) {
+								sendMessage(connection.getServerChannel(), connection, stanza);
+							} else {
+								sendMessage(connection.getClientChannel(), connection, stanza);
+							}
+							return null;
+						}
 					}
 				}
 			}
@@ -157,12 +171,12 @@ public class ClientHandler implements TCPHandler {
 		}
 	}
 	
-	private void sendSilencedMessage(SocketChannel s, ProxyConnection conn, Stanza stanza) {
+	private void sendMessage(SocketChannel s, ProxyConnection conn, Stanza stanza) {
 		Message stanzaMessage = (Message)stanza.getElement();
 		String message = "<message from='" 
 				+ stanzaMessage.getFrom() 
 				+ "' to='" 
-				+ stanzaMessage.getTo() + "'>" 
+				+ stanzaMessage.getTo() + "' type='chat'>" 
 				+ "<body>"
 				+ stanzaMessage.getMessage()
 				+ "</body>"

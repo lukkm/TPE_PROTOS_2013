@@ -100,6 +100,7 @@ public class ProxyConnection {
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
 			if (channelBuffers != null && channelBuffers.getWriteBuffer().hasRemaining()) {
+				System.out.println("Escribiendo");
 				channelBuffers.getWriteBuffer().flip();
 				bytesWrote = s.write(channelBuffers.getWriteBuffer());
 				System.out.println("Bytes escritos: " + bytesWrote);
@@ -150,5 +151,6 @@ public class ProxyConnection {
 	
 	public void appendToBuffer(SocketChannel s, BufferType buffer, byte[] bytes) {
 		ChannelBuffers buffers = buffersMap.get(s);
+		buffers.writeToBuffer(buffer, bytes);
 	}
 }
