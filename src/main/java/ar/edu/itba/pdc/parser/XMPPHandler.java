@@ -91,7 +91,8 @@ public class XMPPHandler extends DefaultHandler {
 				((JIDConfiguration)(currentStanza.getElement())).setJID(str);
 				break;
 			case presenceDelay:
-				((Presence)currentStanza.getElement()).setDelay(str);
+				if (currentStanza.isPresence())
+					((Presence)currentStanza.getElement()).setDelay(str);
 				break;
 		}
 	}
