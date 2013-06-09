@@ -7,6 +7,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +19,9 @@ import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.parser.XMPPParser;
+import ar.edu.itba.pdc.processor.Filter;
+import ar.edu.itba.pdc.processor.SilentUsers;
+import ar.edu.itba.pdc.processor.Statistics;
 import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 import ar.edu.itba.pdc.stanzas.Stanza;
@@ -27,11 +31,19 @@ public class ClientHandler implements TCPHandler {
 	private Map<SocketChannel, ProxyConnection> connections;
 	private XMPPParser parser;
 	private Selector selector;
+	private List<Filter> filterList;
 	
 	public ClientHandler(Selector selector) {
 		this.selector = selector;
-		connections = new HashMap<SocketChannel, ProxyConnection>();
+		this.connections = new HashMap<SocketChannel, ProxyConnection>();
 		this.parser = new XMPPParser();
+		this.filterList = new LinkedList<Filter>();
+		initialize();
+	}
+	
+	private void initialize() {
+		filterList.add(new SilentUsers());
+		filterList.add(new Statistics());
 	}
 	
 	/*
@@ -72,6 +84,17 @@ public class ClientHandler implements TCPHandler {
 		try {
 			stanzaList = parser.parse(connection.getBuffer(s, BufferType.read), connection.getStoredBytes() + bytes);
 			connection.clearStoredBytes();
+			for (Stanza stanza : stanzaList) {
+				for (Filter f : filterList) {
+					f.applyFilter(stanza);
+				}
+				if (stanza.isMessage()) {
+					if (((Message)stanza.getElement()).getTo().contains(connection.getClientJID())) {
+						sendSilencedMessage(s, connection, stanza);
+						return null;
+					}
+				}
+			}
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
 		} catch (IncompleteElementsException e) {
@@ -132,6 +155,19 @@ public class ClientHandler implements TCPHandler {
 		} else {
 			configuration.getClientChannel().register(selector, SelectionKey.OP_READ);
 		}
+	}
+	
+	private void sendSilencedMessage(SocketChannel s, ProxyConnection conn, Stanza stanza) {
+		Message stanzaMessage = (Message)stanza.getElement();
+		String message = "<message from='" 
+				+ stanzaMessage.getFrom() 
+				+ "' to='" 
+				+ stanzaMessage.getTo() + "'>" 
+				+ "<body>"
+				+ stanzaMessage.getMessage()
+				+ "</body>"
+				+ "</message>";
+		conn.appendToBuffer(s, BufferType.write, message.getBytes());
 	}
 
 }

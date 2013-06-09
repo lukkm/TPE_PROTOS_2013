@@ -147,4 +147,8 @@ public class ProxyConnection {
 	public void setClientJID(String clientJID) {
 		this.clientJID = clientJID;
 	}
+	
+	public void appendToBuffer(SocketChannel s, BufferType buffer, byte[] bytes) {
+		ChannelBuffers buffers = buffersMap.get(s);
+	}
 }
