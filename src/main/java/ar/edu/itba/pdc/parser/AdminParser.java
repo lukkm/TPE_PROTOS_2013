@@ -63,9 +63,9 @@ public class AdminParser {
 	}
 
 	public boolean parseCommand(ByteBuffer readBuffer) {
-		// JSONObject str = new JSONObject(readBuffer.array()); TODO DESCOMENTAR
-		JSONObject jsonObj = null;
-		JSONObject jsonObj2 = null;
+		 JSONObject str = new JSONObject(readBuffer.array()); 
+		JSONObject jsonObj = null; //PARA TEST
+		JSONObject jsonObj2 = null; //PARA TEST
 		try {
 			jsonObj = new JSONObject("{silenceuser:juanjo; statistics:luqui}");
 			jsonObj2 = new JSONObject("{silenceuser:pedro; statistics:luqi}");
@@ -74,7 +74,7 @@ public class AdminParser {
 		}
 
 		jsonParse(jsonObj);
-		return jsonParse(jsonObj2);
+		return jsonParse(str);
 
 	}
 
