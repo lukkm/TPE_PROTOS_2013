@@ -4,6 +4,10 @@ import org.apache.commons.codec.binary.Base64;
 
 public class JIDConfiguration extends JabberElement {
 
+	protected JIDConfiguration() {
+		super(null);
+	}
+
 	private String JID;
 	
 	public void setJID(String encodedJID) {

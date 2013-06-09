@@ -21,6 +21,7 @@ import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.processor.Filter;
 import ar.edu.itba.pdc.processor.SilentUsersFilter;
+import ar.edu.itba.pdc.processor.StatisticsFilter;
 import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 import ar.edu.itba.pdc.stanzas.Stanza;
@@ -42,7 +43,7 @@ public class ClientHandler implements TCPHandler {
 	
 	private void initialize() {
 		filterList.add(new SilentUsersFilter());
-//		filterList.add(new StatisticsFilter());
+		filterList.add(new StatisticsFilter());
 	}
 	
 	/*
@@ -96,16 +97,15 @@ public class ClientHandler implements TCPHandler {
 					if (((Message)stanza.getElement()).getTo().contains(connection.getClientJID())) {
 						if (stanza.rejected()) {							
 							sendMessage(s, connection, stanza);
-							updateSelectionKeys(connection);
-							return null;
 						} else {
 							if (s == connection.getClientChannel()) {
 								sendMessage(connection.getServerChannel(), connection, stanza);
 							} else {
 								sendMessage(connection.getClientChannel(), connection, stanza);
-							}
-							return null;
+							}							
 						}
+						updateSelectionKeys(connection);
+						return null;
 					}
 				}
 			}

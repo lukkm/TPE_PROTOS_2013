@@ -3,7 +3,6 @@ package ar.edu.itba.pdc.jabber;
 public class Message extends JabberElement {
 	
 	private String message = null;
-	private String from;
 	private String to;
 	
 	public Message(String message, String from, String to) {
@@ -12,7 +11,7 @@ public class Message extends JabberElement {
 	}
 	
 	public Message(String from, String to) {
-		this.from = from;
+		super(from);
 		this.to = to;
 	}
 	
@@ -22,14 +21,6 @@ public class Message extends JabberElement {
 	
 	public String getMessage() {
 		return message;
-	}
-	
-	public String getFrom() {
-		return from;
-	}
-
-	public void setFrom(String from) {
-		this.from = from;
 	}
 
 	public String getTo() {

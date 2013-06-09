@@ -91,14 +91,19 @@ public class StatisticsFilter implements Filter{
 	/* fin clase interna */
 	
 	public void apply(Stanza stanza) {
-		String from = ((Message)stanza.getElement()).getFrom();
-		if (!usersStatistics.containsKey(from)) {
-			usersStatistics.put(from, new PersonalStatistic(from));
+		if (stanza.getElement() != null) {
+			String from = stanza.getElement().getFrom();
+			if (from != null) {
+				if (!usersStatistics.containsKey(from)) {
+					usersStatistics.put(from, new PersonalStatistic(from));
+				}
+				if (stanza.isMessage()) {
+					usersStatistics.get(from).applyFilter((Message) stanza.getElement());
+				} else if (stanza.isPresence()) {
+					usersStatistics.get(from).applyFilter((Presence) stanza.getElement());
+				}
+			}
 		}
-		if (stanza.isMessage())
-			usersStatistics.get(from).applyFilter((Message) stanza.getElement());
-		else if (stanza.isPresence())
-			usersStatistics.get(from).applyFilter((Presence) stanza.getElement());
 	}
 	
 	private int getCurrentInterval() {

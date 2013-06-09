@@ -14,7 +14,7 @@ public class SilentUsersFilter implements Filter{
 	public SilentUsersFilter() {
 		if (mapOfSilence == null)
 			mapOfSilence = new HashSet<String>();
-		String silentUsers = ConfigurationCommands.getInstance().getProperty("silentuser");
+		String silentUsers = ConfigurationCommands.getInstance().getProperty("silenceuser");
 		for (String s : silentUsers.split(";")) {
 			addSilencedUser(s);
 		}
