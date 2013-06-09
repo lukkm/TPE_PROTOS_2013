@@ -32,6 +32,10 @@ public class ChannelBuffers {
 	public ByteBuffer getWriteBuffer() {
 		return writeBuffer;
 	}
+	
+	public ByteBuffer getBuffer(BufferType type) {
+		return type == BufferType.read ? readBuffer : writeBuffer;
+	}
 
 	public void synchronizeBuffers(ChannelBuffers channelBuffers) {
 		ByteBuffer wrBuffer = channelBuffers.getWriteBuffer();
@@ -52,5 +56,4 @@ public class ChannelBuffers {
 	public void autoSynchronizeBuffers() {
 		synchronizeBuffers(this);
 	}
-
 }

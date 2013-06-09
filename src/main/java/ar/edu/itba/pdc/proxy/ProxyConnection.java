@@ -88,7 +88,7 @@ public class ProxyConnection {
 	}
 	
 	public boolean hasInformationForChannel(SocketChannel s) {
-		return buffersMap.get(s) != null && buffersMap.get(s).getWriteBuffer().capacity() != buffersMap.get(s).getWriteBuffer().remaining();
+		return buffersMap.get(s) != null && buffersMap.get(s).getBuffer(BufferType.write).capacity() != buffersMap.get(s).getBuffer(BufferType.write).remaining();
 	}
 	
 	public boolean hasServer() {
@@ -119,9 +119,9 @@ public class ProxyConnection {
 		int bytesRead = s.read(buffersMap.get(s).getReadBuffer());
 
 		if (s == client)
-			System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getReadBuffer().array()).substring(0, bytesRead));
+			System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, bytesRead));
 		else
-			System.out.println("Leido del server: " + new String(buffersMap.get(s).getReadBuffer().array()).substring(0, bytesRead));
+			System.out.println("Leido del server: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, bytesRead));
 		
 		if (bytesRead == -1) {
 			/* EOF - Hay que cerrar el canal */
