@@ -1,6 +1,8 @@
 package ar.edu.itba.pdc.parser;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,85 +11,90 @@ import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class AdminParser {
 
-	private String[] commands = { "silenceuser", "statistics", "getStatistics",
-			"setTransformation", "interval" };
+	private Map<String, CommandType> commands = new HashMap<String, CommandType>();
 	private ConfigurationCommands commandManager;
 
 	public AdminParser() {
 		commandManager = ConfigurationCommands.getInstance();
+		commands.put("silenceuser", CommandType.listCommand);
+		commands.put("statistics", CommandType.booleanCommand);
+		commands.put("monitor", CommandType.booleanCommand);
+		commands.put("getStatistics", CommandType.getCommand);
+		commands.put("transformation", CommandType.booleanCommand);
+		commands.put("interval", CommandType.booleanCommand);
 	}
 
-//	private void saveFile(Properties props) {
-//		String current = "";
-//		FileOutputStream ops = null;
-//		try {
-//			current = new java.io.File(".").getCanonicalPath();
-//		} catch (IOException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		try {
-//			ops = new FileOutputStream(
-//					current
-//							+ "/src/main/java/ar/edu/itba/pdc/resources/parsedcommands.properties",
-//					false);
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		try {
-//			props.store(ops, "Commands");
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
-
-	public boolean parseCommand(ByteBuffer readBuffer) {
-		JSONObject json = new JSONObject(readBuffer.array()); 
-//		JSONObject jsonObj = null; //PARA TEST
-//		JSONObject jsonObj2 = null; //PARA TEST
-//		try {
-//			jsonObj = new JSONObject("{silenceuser:juanjo; statistics:luqui}");
-//			jsonObj2 = new JSONObject("{silenceuser:pedro; statistics:luqi}");
-//		} catch (JSONException e) {
-//			System.out.println("Bad JSON Syntaxis");
-//		}
-//
-//		jsonParse(jsonObj);
+	public boolean parseCommand(ByteBuffer readBuffer) throws JSONException {
+		JSONObject json = new JSONObject(new String(readBuffer.array()));
 		return jsonParse(json);
 
 	}
 
-	private boolean jsonParse(JSONObject jsonObject) {
+	private boolean jsonParse(JSONObject jsonObject) throws JSONException {
 		String[] keys = JSONObject.getNames(jsonObject); // Multiples mensajes
+		if (keys == null) {
+			throw new JSONException("Bad syntax");
+		}
 		for (String string : keys) {
-			for (String cmd : this.commands) {
-				if (string.compareTo(cmd) == 0) {
-					String s = commandManager.getProperty(cmd);
-
-					String t = "";
-					try {
-						t = jsonObject.get(cmd).toString();
-						if (s != null
-								&& s.contains(t.subSequence(0, t.length()))) {
+			for (String cmd : this.commands.keySet()) {
+				if (string.equals(cmd)) {
+					boolean accepted;
+					switch (commands.get(string)) {
+						case booleanCommand:
+							accepted = executeBooleanCommand(jsonObject, cmd);
 							break;
-						}
-					} catch (JSONException e) {
-						System.out.println("Error JSON");
+						case listCommand:
+							accepted = executeListCommand(jsonObject, cmd);
+							break;
+						case getCommand:
+							/*Asignar a respuesta*/ executeGetCommand(jsonObject, cmd);
+							accepted = true;
+							break;
+						default:
+							accepted = false;
 					}
-					System.out.println("s :" + s);
-					System.out.println("t :" + t);
-
-					if (s != null)
-						commandManager.setProperty(cmd, s + ";" + t);
+					if (accepted)
+						commandManager.saveFile();
 					else
-						commandManager.setProperty(cmd, t);
-					//saveFile(p);
+						throw new JSONException("Bad Syntax");
 					break;
 				}
 			}
 		}
 		return true;
+	}
+	
+	private boolean executeListCommand(JSONObject jsonObject, String cmd) {
+		String oldValue = "";
+		if (commandManager.hasProperty(cmd))
+			oldValue = commandManager.getProperty(cmd);
+		String newValue = "";
+		try {
+			newValue = jsonObject.get(cmd).toString();
+			if (oldValue != null && oldValue.contains(newValue)) {
+			}
+		} catch (JSONException e) {
+			System.out.println("Error JSON");
+		}
+
+		if (oldValue != null && !oldValue.equals(""))
+			commandManager.setProperty(cmd, oldValue + ";"
+					+ newValue);
+		else
+			commandManager.setProperty(cmd, newValue);
+		return true;
+	}
+	
+	private boolean executeBooleanCommand(JSONObject jsonObject, String cmd) throws JSONException {
+		String value = jsonObject.get(cmd).toString().toLowerCase();
+		if (!value.equals("enabled") && !value.equals("disabled"))
+			return false;
+		commandManager.setProperty(cmd, value);
+		return true;
+	}
+	
+	private void executeGetCommand(JSONObject jsonObject, String cmd) {
+		/* Ver como hacer el get */
+		
 	}
 }

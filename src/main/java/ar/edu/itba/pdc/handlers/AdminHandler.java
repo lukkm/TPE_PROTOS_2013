@@ -9,6 +9,8 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.JSONException;
+
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.parser.AdminParser;
 import ar.edu.itba.pdc.proxy.ChannelBuffers;
@@ -34,9 +36,12 @@ public class AdminHandler implements TCPHandler {
 		ChannelBuffers channelBuffers = config.get(s);
 		s.read(channelBuffers.getReadBuffer());
 
-		if (!parser.parseCommand(channelBuffers.getReadBuffer()))
-			System.out.println("Mala sintaxis");
-
+		try {
+			if (!parser.parseCommand(channelBuffers.getReadBuffer()))
+				System.out.println("Mala sintaxis");
+		} catch (JSONException e) {
+			System.out.println("Bad syntax");
+		}
 		// parseCommand(channelBuffers.getReadBuffer());
 		// channelBuffers.autoSynchronizeBuffers();
 		// String strCommand = new
