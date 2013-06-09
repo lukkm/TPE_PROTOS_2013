@@ -18,6 +18,8 @@ import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPParser {
 
+	private ParsingState parsingState;
+	
 	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws ParserConfigurationException, IOException, IncompleteElementsException {
 		
 		/* Medio feo, ver como se soluciona */
@@ -39,7 +41,15 @@ public class XMPPParser {
 		    SAXParser parser;
 			try {
 				parser = factory.newSAXParser();
-				XMPPHandler handler = new XMPPHandler();
+				XMPPHandler handler = new XMPPHandler(new StateCallback() {
+					public void changeState(ParsingState state) {
+						XMPPParser.this.parsingState = state;
+					}
+				});
+				if (this.parsingState != ParsingState.noState) {
+					handler.setState(parsingState);
+					parsingState = ParsingState.noState;
+				}
 				parser.parse(is, handler);
 				if (handler.hasIncompleteElements()) {
 					throw new IncompleteElementsException();
