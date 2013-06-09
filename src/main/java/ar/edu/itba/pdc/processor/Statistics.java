@@ -82,7 +82,7 @@ public class Statistics implements Filter{
 
 
 	public void applyFilter(Stanza stanza) {
-		String from = stanza.getElement().getFrom();
+		String from = ((Message)stanza.getElement()).getFrom();
 		if (!usersStatistics.containsKey(from)) {
 			usersStatistics.put(from, new PersonalStatistic(from));
 		}

@@ -31,8 +31,9 @@ public class SilentUsers implements Filter{
 	}
 
 	public void applyFilter(Stanza stanza) {
-		if (stanza.isMessage() && mapOfSilence.contains(((Message) stanza.getElement()).getFrom())) {
-			
+		String from = ((Message) stanza.getElement()).getFrom();
+		if (stanza.isMessage() && mapOfSilence.contains(from)) {
+			((Message)stanza.getElement()).setTo(from);
 		}
 	}
 	
