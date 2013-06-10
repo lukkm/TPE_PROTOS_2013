@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.processor;
+package ar.edu.itba.pdc.filters;
 
 import java.util.HashSet;
 import java.util.Set;

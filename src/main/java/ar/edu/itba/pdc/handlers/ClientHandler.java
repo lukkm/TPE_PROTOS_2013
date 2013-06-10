@@ -14,14 +14,14 @@ import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 
 import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
+import ar.edu.itba.pdc.filters.Filter;
+import ar.edu.itba.pdc.filters.SilentUsersFilter;
+import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.parser.XMPPParser;
-import ar.edu.itba.pdc.processor.Filter;
-import ar.edu.itba.pdc.processor.SilentUsersFilter;
-import ar.edu.itba.pdc.processor.TransformationFilter;
 import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 import ar.edu.itba.pdc.stanzas.Stanza;

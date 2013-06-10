@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.processor;
+package ar.edu.itba.pdc.filters;
 
 import ar.edu.itba.pdc.stanzas.Stanza;
 

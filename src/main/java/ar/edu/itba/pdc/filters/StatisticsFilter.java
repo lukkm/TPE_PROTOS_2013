@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.processor;
+package ar.edu.itba.pdc.filters;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -25,6 +25,7 @@ public class StatisticsFilter implements Filter{
 	public StatisticsFilter() {
 		if (usersStatistics == null) {
 			usersStatistics = new HashMap<String, PersonalStatistic>();
+		initialStatisticsTime = System.currentTimeMillis();
 //			interval = desde archivo conf
 		}
 	}
@@ -96,7 +97,7 @@ public class StatisticsFilter implements Filter{
 	}
 	
 	private int getCurrentInterval() {
-		return ((int)((int)(System.currentTimeMillis()-initialStatisticsTime))/(interval));
+		return ((int)((System.currentTimeMillis()-initialStatisticsTime))/(interval));
 	}
 	
 	private String printHistogram(int[] array, int interval, int unit) {
