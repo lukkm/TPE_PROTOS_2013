@@ -26,7 +26,7 @@ public class XMPPParser {
 		String xmlString = new String(xmlStream.array()).substring(0, length);
 		
 		/* Cambiar (Esto es porq el elemento stream nunca cierra y crashea) */
-		if(xmlString.contains("<stream:stream")) {
+		if(xmlString.contains("<stream:")) {
 			System.out.println("Empieza el stream!");
 			return new LinkedList<Stanza>();
 		} else {		

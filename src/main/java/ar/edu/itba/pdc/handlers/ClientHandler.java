@@ -69,7 +69,7 @@ public class ClientHandler implements TCPHandler {
 	    	
 			serverChannel = SocketChannel.open();
 	        serverChannel.connect(new InetSocketAddress("hermes.jabber.org", 5222));
-	        serverChannel.configureBlocking(false);
+			serverChannel.configureBlocking(false);
 	        serverChannel.register(selector, SelectionKey.OP_READ);
 	        connection.setServer(serverChannel);
 	        connections.put(serverChannel, connection);

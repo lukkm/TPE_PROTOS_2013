@@ -1,20 +1,31 @@
 package ar.edu.itba.pdc.proxy;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ChannelBuffers {
 	private static final int BUFFER_SIZE = 1024;
 	private ByteBuffer readBuffer;
 	private ByteBuffer writeBuffer;
+	
+	private Map<BufferType, ByteBuffer> buffers = new HashMap<BufferType, ByteBuffer>();;
 
 	public ChannelBuffers() {
-		readBuffer = ByteBuffer.allocate(BUFFER_SIZE);
-		writeBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+		this.readBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+		this.writeBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+		initializeMap();
 	}
 
 	public ChannelBuffers(ByteBuffer readBuffer, ByteBuffer writeBuffer) {
 		this.readBuffer = readBuffer;
 		this.writeBuffer = writeBuffer;
+		initializeMap();
+	}
+	
+	private void initializeMap() {
+		buffers.put(BufferType.read, readBuffer);
+		buffers.put(BufferType.write, writeBuffer);
 	}
 
 	public void setReadBuffer(ByteBuffer readBuffer) {
@@ -25,20 +36,20 @@ public class ChannelBuffers {
 		this.writeBuffer = writeBuffer;
 	}
 
+	public ByteBuffer getBuffer(BufferType type) {
+		return buffers.get(type);
+	}
+	
 	public ByteBuffer getReadBuffer() {
 		return readBuffer;
 	}
-
+	
 	public ByteBuffer getWriteBuffer() {
 		return writeBuffer;
 	}
 	
-	public ByteBuffer getBuffer(BufferType type) {
-		return type == BufferType.read ? readBuffer : writeBuffer;
-	}
-
 	public void synchronizeBuffers(ChannelBuffers channelBuffers) {
-		ByteBuffer wrBuffer = channelBuffers.getWriteBuffer();
+		ByteBuffer wrBuffer = channelBuffers.getBuffer(BufferType.write);
 		readBuffer.flip();
 		if (wrBuffer.remaining() > (readBuffer.capacity() - readBuffer
 				.remaining())) {
@@ -70,4 +81,25 @@ public class ChannelBuffers {
 		}
 		buf.put(bytes);
 	}
+	
+	public void clearBuffer(BufferType type) {
+		buffers.get(type).clear();
+	}
+	
+	public void flipBuffer(BufferType type) {
+		buffers.get(type).flip();
+	}
+	
+	public void compactBuffer(BufferType type) {
+		buffers.get(type).compact();
+	}
+	
+	public boolean hasInformation(BufferType type) {
+		return buffers.get(type).capacity() != buffers.get(type).remaining();
+	}
+	
+	public boolean hasRemaining(BufferType type) {
+		return buffers.get(type).hasRemaining();
+	}
+	
 }
