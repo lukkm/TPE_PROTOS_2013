@@ -44,7 +44,7 @@ public class ClientHandler implements TCPHandler {
 	private void initialize() {
 		filterList.add(new SilentUsersFilter());
 		//filterList.add(new StatisticsFilter());
-		//filterList.add(new TransformationFilter());
+		filterList.add(new TransformationFilter());
 	}
 	
 	/*
@@ -95,19 +95,21 @@ public class ClientHandler implements TCPHandler {
 					f.apply(stanza);
 				}
 				if (stanza.isMessage()) {
-					if (((Message)stanza.getElement()).getTo().contains(connection.getClientJID())) {
-						if (stanza.rejected()) {							
-							sendMessage(s, connection, stanza);
-						} else {
+					Message msg = (Message)stanza.getElement();
+					if ((msg.getFrom().contains(connection.getClientJID()) || msg.getTo().contains(connection.getClientJID())) && stanza.rejected()) {							
+						sendMessage(s, connection, stanza);
+					} else {
+						if (msg.getMessage() != null) {
 							if (s == connection.getClientChannel()) {
 								sendMessage(connection.getServerChannel(), connection, stanza);
 							} else {
 								sendMessage(connection.getClientChannel(), connection, stanza);
-							}							
+							}
 						}
-						updateSelectionKeys(connection);
-						return null;
 					}
+					connection.getBuffer(s, BufferType.read).clear();
+					updateSelectionKeys(connection);
+					return null;
 				}
 			}
 		} catch (ParserConfigurationException e) {

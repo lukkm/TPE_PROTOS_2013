@@ -9,25 +9,24 @@ import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class TransformationFilter implements Filter{
 	
-	char[] changedVocabulary = "4B<D3FGH1JKLMN0PQRSTUVWQYZ4b<d3fgh1jklmn0pqrstuvwqyz".toCharArray();
+	private Map<Character,String> changes;
 	
 	public TransformationFilter() {
-		changes.put("a", "4");
-		changes.put("e", "3");
-		changes.put("i", "1");
-		changes.put("o", "0");
-		changes.put("c", "<");
+		changes = new HashMap<Character,String>();
+		changes.put('a', "4");
+		changes.put('e', "3");
+		changes.put('i', "1");
+		changes.put('o', "0");
+		changes.put('c', "&lt;");
 	}
-	
-	Map<String,String> changes = new HashMap<String,String>();
 	
 	public void apply(Stanza stanza) {
 		String s = ConfigurationCommands.getInstance().getProperty("transformation");
 		if (s != null && s.equals("enabled")) {
 			if (stanza.isMessage()) {
 				String msg = ((Message)stanza.getElement()).getMessage();
-				StringBuffer sb = new StringBuffer();
 				if (msg != null) {
+					StringBuffer sb = new StringBuffer(msg.length());
 					for (int i = 0; i < msg.length(); i++) {
 						if (changes.containsKey(msg.charAt(i))) 
 							sb.append(changes.get(msg.charAt(i)));
