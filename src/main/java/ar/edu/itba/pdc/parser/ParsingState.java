@@ -6,5 +6,6 @@ public enum ParsingState {
 	messageBody,
 	waitingClientAuthResponse,
 	authBody,
-	presenceDelay
+	presenceDelay,
+	activeState
 }

@@ -63,6 +63,9 @@ public class XMPPHandler extends DefaultHandler {
 					this.parsingState = ParsingState.messageBody;
 				} else if (elementName.equals("delay")) {
 					this.parsingState = ParsingState.presenceDelay;
+				} else if (elementName.equals("active")) {
+					((Message)currentStanza.getElement()).setActiveXmlns(attributes.getValue("xmlns"));
+					this.parsingState = ParsingState.activeState;
 				}
 			}
 		}
@@ -93,6 +96,10 @@ public class XMPPHandler extends DefaultHandler {
 			case presenceDelay:
 				if (currentStanza.isPresence())
 					((Presence)currentStanza.getElement()).setDelay(str);
+				break;
+			case activeState:
+				if (currentStanza.isMessage())
+					((Message)currentStanza.getElement()).setActive(str);
 				break;
 		}
 	}

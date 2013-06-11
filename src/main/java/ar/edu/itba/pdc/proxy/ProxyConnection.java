@@ -6,10 +6,11 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
+import ar.edu.itba.pdc.jabber.Message;
+import ar.edu.itba.pdc.stanzas.Stanza;
+
 
 public class ProxyConnection {
-
-	private static final int BUFFER_SIZE = 4096;
 	
 	private SocketChannel server = null;
 	private SocketChannel client = null;
@@ -18,21 +19,27 @@ public class ProxyConnection {
 	
 	private String clientJID = null;
 	
+    protected static final byte[] INITIAL_STREAM = ("<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>").getBytes();
+    protected static final byte[] FEATURES_NEGOTIATION     = ("<stream:features><mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"><mechanism>PLAIN</mechanism></mechanisms><auth xmlns=\"http://jabber.org/features/iq-auth\"/></stream:features>").getBytes();
+	
+    private ConnectionState state;
+    
 	private Map<SocketChannel, ChannelBuffers> buffersMap = new HashMap<SocketChannel, ChannelBuffers>();
 	
 	public ProxyConnection(SocketChannel server, SocketChannel client) {
 		this(client);
 		setServer(server);
+		this.state = ConnectionState.noState;
 	}
 	
 	public ProxyConnection(SocketChannel client) {
 		this.client = client;
-		buffersMap.put(client, new ChannelBuffers(ByteBuffer.allocate(BUFFER_SIZE), ByteBuffer.allocate(BUFFER_SIZE)));
+		buffersMap.put(client, new ChannelBuffers());
 	}
 	
 	public void setServer(SocketChannel server) {
 		this.server = server;
-		buffersMap.put(server, new ChannelBuffers(ByteBuffer.allocate(BUFFER_SIZE), ByteBuffer.allocate(BUFFER_SIZE)));
+		buffersMap.put(server, new ChannelBuffers());
 	}
 	
 	public void storeBytes(int bytes) {
@@ -60,27 +67,16 @@ public class ProxyConnection {
 	}
 	
 	public void expandBuffer(SocketChannel s, BufferType type) {
+		
 		ChannelBuffers buffers = buffersMap.get(s);
-		if (type == BufferType.read) {
-			ByteBuffer buf = buffers.getReadBuffer();
-			buf.flip();
-			buffers.setReadBuffer(ByteBuffer.allocate(buf.capacity() * 2).put(buf));
-			System.out.println("Quedo en el buffer read: " + new String(buffers.getReadBuffer().array()));
-		} else {
-			ByteBuffer buf = buffers.getWriteBuffer();
-			buf.flip();
-			buffers.setWriteBuffer(ByteBuffer.allocate(buf.capacity() * 2).put(buf));
-			System.out.println("Quedo en el buffer write: " + new String(buffers.getWriteBuffer().array()));
-		}
+		buffers.expandBuffer(type);
+		System.out.println("Quedo en el buffer : " + new String(buffers.getBuffer(type).array()));
 	}
 	
 	public ByteBuffer getBuffer(SocketChannel s, BufferType bufType) {
 		if (buffersMap.get(s) == null)
 			return null;
-		if (bufType == BufferType.read)
-			return buffersMap.get(s).getReadBuffer();
-		else
-			return buffersMap.get(s).getWriteBuffer();
+		return buffersMap.get(s).getBuffer(bufType);
 	}
 	
 	public boolean hasClient() {
@@ -99,12 +95,12 @@ public class ProxyConnection {
 		int bytesWrote = 0;
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
-			if (channelBuffers != null && channelBuffers.getWriteBuffer().hasRemaining()) {
+			if (channelBuffers != null && channelBuffers.getBuffer(BufferType.write).hasRemaining()) {
 				System.out.println("Escribiendo");
-				channelBuffers.getWriteBuffer().flip();
-				bytesWrote = s.write(channelBuffers.getWriteBuffer());
+				channelBuffers.getBuffer(BufferType.write).flip();
+				bytesWrote = s.write(channelBuffers.getBuffer(BufferType.write));
 				System.out.println("Bytes escritos: " + bytesWrote);
-				channelBuffers.getWriteBuffer().clear();
+				channelBuffers.getBuffer(BufferType.write).clear();
 			}
 		}
 		return bytesWrote;
@@ -117,7 +113,7 @@ public class ProxyConnection {
 		 * Mas adelante hay que ver como procesar esos paquetes.
 		 */
 		
-		int bytesRead = s.read(buffersMap.get(s).getReadBuffer());
+		int bytesRead = s.read(buffersMap.get(s).getBuffer(BufferType.read));
 
 		String message = new String(buffersMap.get(s).getBuffer(BufferType.read).array());
 		
@@ -146,6 +142,10 @@ public class ProxyConnection {
 	public String getClientJID() {
 		return clientJID;
 	}
+	
+	public ConnectionState getState() {
+		return state;
+	}
 
 	public void setClientJID(String clientJID) {
 		this.clientJID = clientJID;
@@ -154,5 +154,11 @@ public class ProxyConnection {
 	public void appendToBuffer(SocketChannel s, BufferType buffer, byte[] bytes) {
 		ChannelBuffers buffers = buffersMap.get(s);
 		buffers.writeToBuffer(buffer, bytes);
+	}
+	
+	public void sendMessage(SocketChannel s, Stanza stanza) {
+		Message message = (Message)stanza.getElement();
+		appendToBuffer(s, BufferType.write, message.getXMLMessage().getBytes());
+		getBuffer(s, BufferType.read).clear();
 	}
 }
