@@ -1,8 +1,10 @@
 package ar.edu.itba.pdc.proxy;
 
 public enum ConnectionState {
+	noState,
+	waitingForStream,
 	starting,
 	negotiating,
-	connected,
-	noState
+	ready,
+	connected
 }

@@ -57,7 +57,7 @@ public class XMPPHandler extends DefaultHandler {
 			
 		} else if (indentCount > 0){
 			if (currentStanza.isMessage()) {
-				
+
 				/* Inner element name parsing */
 				if (elementName.equals("body")) {
 					this.parsingState = ParsingState.messageBody;
@@ -67,6 +67,7 @@ public class XMPPHandler extends DefaultHandler {
 					((Message)currentStanza.getElement()).setActiveXmlns(attributes.getValue("xmlns"));
 					this.parsingState = ParsingState.activeState;
 				}
+				
 			}
 		}
 		

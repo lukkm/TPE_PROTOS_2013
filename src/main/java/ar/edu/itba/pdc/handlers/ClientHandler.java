@@ -66,14 +66,20 @@ public class ClientHandler implements TCPHandler {
 		if (!connection.hasServer()) {
 
 			/* A implementar bien dependiendo del read que haga */
-			
-			serverChannel = SocketChannel.open();
-			serverChannel.connect(new InetSocketAddress("hermes.jabber.org",
-					5222));
-			serverChannel.configureBlocking(false);
-			serverChannel.register(selector, SelectionKey.OP_READ);
-			connection.setServer(serverChannel);
+			if (true) {			//connection.readyToConnectToServer()
+				
+				/* Aca hay que hacer un get del server channel antes de conectarlo */
+				
+				serverChannel = SocketChannel.open();
+				serverChannel.connect(new InetSocketAddress("hermes.jabber.org",
+						5222));
+				serverChannel.configureBlocking(false);
+				serverChannel.register(selector, SelectionKey.OP_READ);
+				connection.setServer(serverChannel);
 			connections.put(serverChannel, connection);
+			} else {
+				connection.handleConnectionStanza(s);
+			}
 
 			/* Hasta aca */
 		}
@@ -83,6 +89,7 @@ public class ClientHandler implements TCPHandler {
 
 		/* Parse what was just read */
 		List<Stanza> stanzaList = null;
+		
 		try {
 			stanzaList = parser.parse(connection.getBuffer(s, BufferType.read),
 					connection.getStoredBytes() + bytes);
@@ -94,12 +101,10 @@ public class ClientHandler implements TCPHandler {
 
 				if (stanza.isMessage()) {
 					Message msg = (Message) stanza.getElement();
-					if (msg.getFrom() == null)
+
+					if (msg.getFrom() == null && s == connection.getClientChannel())
 						msg.setFrom(connection.getClientJID());
-				}
 				
-				if (stanza.isMessage()) {
-					Message msg = (Message) stanza.getElement();
 					if ((msg.getFrom().contains(connection.getClientJID()) || msg
 							.getTo().contains(connection.getClientJID()))
 							&& stanza.rejected()) {
@@ -117,7 +122,7 @@ public class ClientHandler implements TCPHandler {
 						}
 					}
 					updateSelectionKeys(connection);
-					return null;
+					return null; /* Ver bien que hacer */
 				}
 			}
 		} catch (ParserConfigurationException e) {
@@ -140,8 +145,8 @@ public class ClientHandler implements TCPHandler {
 							.println("<--------------------------------------------------------------->");
 				} else if (stanza.isJIDConfiguration()) {
 					JIDConfiguration jid = (JIDConfiguration) stanza
-							.getElement();
-					connection.setClientJID(jid.getJID());
+							.getElement(); /* ESTO ES IMPORTANTE */
+					connection.setClientJID(jid.getJID()); /* ESTO ES IMPORTANTE */
 					System.out
 							.println("<--------------------------- JID CONFIGURATION --------------------------->");
 					System.out.println("JID: " + jid.getJID());

@@ -19,8 +19,12 @@ public class ProxyConnection {
 	
 	private String clientJID = null;
 	
-    protected static final byte[] INITIAL_STREAM = ("<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>").getBytes();
-    protected static final byte[] FEATURES_NEGOTIATION     = ("<stream:features><mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"><mechanism>PLAIN</mechanism></mechanisms><auth xmlns=\"http://jabber.org/features/iq-auth\"/></stream:features>").getBytes();
+	/* Client Streams */
+    protected static final String INITIAL_STREAM           = "<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' ";
+    
+    /* Server Streams */
+    protected static final byte[] INITIAL_SERVER_STREAM = ("<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>").getBytes();
+    protected static final byte[] NEGOTIATION     = ("<stream:features><mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"><mechanism>PLAIN</mechanism></mechanisms><auth xmlns=\"http://jabber.org/features/iq-auth\"/></stream:features>").getBytes();
 	
     private ConnectionState state;
     
@@ -29,11 +33,11 @@ public class ProxyConnection {
 	public ProxyConnection(SocketChannel server, SocketChannel client) {
 		this(client);
 		setServer(server);
-		this.state = ConnectionState.noState;
 	}
 	
 	public ProxyConnection(SocketChannel client) {
 		this.client = client;
+		this.state = ConnectionState.noState;
 		buffersMap.put(client, new ChannelBuffers());
 	}
 	
@@ -158,7 +162,45 @@ public class ProxyConnection {
 	
 	public void sendMessage(SocketChannel s, Stanza stanza) {
 		Message message = (Message)stanza.getElement();
-		appendToBuffer(s, BufferType.write, message.getXMLMessage().getBytes());
-		getBuffer(s, BufferType.read).clear();
+		sendMessage(s, message.getXMLMessage().getBytes());
+	}
+	
+	private void sendMessage(SocketChannel s, byte[] bytes) {
+		appendToBuffer(s, BufferType.write, bytes);
+		buffersMap.get(s).clearBuffer(BufferType.read);
+	}
+	
+	public boolean readyToConnectToServer() {
+		return state == ConnectionState.ready;
+	}
+	
+	public void handleConnectionStanza(SocketChannel s) throws IOException {
+		readFrom(s);
+		String read = new String(getBuffer(s, BufferType.read).array());
+		System.out.println(read);
+		switch (state) {
+			case noState:
+				if (read.startsWith("<xml")) {
+					if (read.contains("<stream")) {
+						state = ConnectionState.starting;		
+						sendMessage(s, INITIAL_SERVER_STREAM);
+					} else {
+						state = ConnectionState.waitingForStream;
+					}
+				} else {
+					/* ERROR */
+				}
+				break;
+			case waitingForStream:
+				if (read.startsWith("<stream"))
+					state = ConnectionState.starting;
+				else
+					/* ERROR */
+				break;
+			case starting:
+				break;
+			case negotiating:
+				break;
+		}
 	}
 }
