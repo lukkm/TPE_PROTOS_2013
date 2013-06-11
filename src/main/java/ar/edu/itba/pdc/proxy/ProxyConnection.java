@@ -6,6 +6,8 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
+
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
@@ -17,10 +19,16 @@ public class ProxyConnection {
 	
 	private int storedBytes = 0;
 	
+	/* Client connection parameters */
 	private String clientJID = null;
+	private String clientUsername = null;
 	
 	/* Client Streams */
-    protected static final String INITIAL_STREAM           = "<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' ";
+	protected static final String INITIAL_STREAM           = "<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' ";
+
+	/* Server connection parameters */
+	private String serverName = null;
+	private String authorizationStream = null;
     
     /* Server Streams */
     protected static final byte[] INITIAL_SERVER_STREAM = ("<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>").getBytes();
@@ -70,6 +78,11 @@ public class ProxyConnection {
 		return client;
 	}
 	
+	public void setServerName(String name) {
+		this.serverName = name;
+		this.clientJID = clientUsername + "@" + serverName;
+	}
+	
 	public void expandBuffer(SocketChannel s, BufferType type) {
 		
 		ChannelBuffers buffers = buffersMap.get(s);
@@ -93,6 +106,10 @@ public class ProxyConnection {
 	
 	public boolean hasServer() {
 		return server != null;
+	}
+	
+	public boolean hasConnectedServer() {
+		return server != null && state == ConnectionState.connected;
 	}
 	
 	public int writeTo(SocketChannel s) throws IOException {
@@ -174,16 +191,22 @@ public class ProxyConnection {
 		return state == ConnectionState.ready;
 	}
 	
+	public String getClientUsername() {
+		return clientUsername;
+	}
+	
 	public void handleConnectionStanza(SocketChannel s) throws IOException {
-		readFrom(s);
-		String read = new String(getBuffer(s, BufferType.read).array());
+		System.out.println("HANDLERR");
+		int length = readFrom(s);
+		String read = new String(getBuffer(s, BufferType.read).array()).substring(0, length);
 		System.out.println(read);
 		switch (state) {
 			case noState:
-				if (read.startsWith("<xml")) {
+				if (read.startsWith("<?xml")) {
 					if (read.contains("<stream")) {
-						state = ConnectionState.starting;		
+						state = ConnectionState.negotiating;		
 						sendMessage(s, INITIAL_SERVER_STREAM);
+						sendMessage(s, NEGOTIATION);
 					} else {
 						state = ConnectionState.waitingForStream;
 					}
@@ -192,15 +215,54 @@ public class ProxyConnection {
 				}
 				break;
 			case waitingForStream:
-				if (read.startsWith("<stream"))
-					state = ConnectionState.starting;
-				else
+				if (read.startsWith("<stream")) {
+					state = ConnectionState.negotiating;
+					sendMessage(s, INITIAL_SERVER_STREAM);
+					sendMessage(s, NEGOTIATION);
+				} else {
 					/* ERROR */
-				break;
-			case starting:
+				}
 				break;
 			case negotiating:
+				if (read.startsWith("<auth")) {
+					authorizationStream = read;
+					byte[] data = Base64.decodeBase64(read.substring(read.indexOf(">") + 1,
+                            read.lastIndexOf("<")).getBytes());
+					String stringData = new String(data);
+					this.clientUsername = stringData.substring(1, stringData.indexOf(0, 1));	
+					this.state = ConnectionState.ready;
+					buffersMap.get(client).clearBuffer(BufferType.read);
+				}
 				break;
+			case connectingToServer:
+				if (read.startsWith("<?xml")) {
+						if (read.contains("<stream")) {
+							sendMessage(server, authorizationStream.getBytes());
+							this.state = ConnectionState.connected;
+						} else {
+							this.state = ConnectionState.waitingForServerFeatures;
+						}
+				}
+				break;
+			case waitingForServerFeatures:
+				if (read.startsWith("<stream:features")) {
+					sendMessage(server, authorizationStream.getBytes());
+					this.state = ConnectionState.connected;
+				}
+				break;
+		}
+	}
+	
+	public boolean connected() {
+		return this.state == ConnectionState.connected;
+	}
+	
+	public void writeFirstStreamToServer() {
+		if (serverName != null) {
+			String stream = INITIAL_STREAM + "to='" + serverName + "'>";
+			sendMessage(server, stream.getBytes());
+			System.out.println("MESSAGE: " + stream);
+			this.state = ConnectionState.connectingToServer;
 		}
 	}
 }
