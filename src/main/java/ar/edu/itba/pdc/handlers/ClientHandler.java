@@ -115,7 +115,7 @@ public class ClientHandler implements TCPHandler {
 					
 						if ((msg.getFrom().contains(connection.getClientJID()) || msg
 								.getTo().contains(connection.getClientJID()))
-								&& stanza.rejected()) {
+								&& stanza.isrejected()) {
 							connection.sendMessage(s, stanza);
 						} else {
 							if (msg.getMessage() != null) {

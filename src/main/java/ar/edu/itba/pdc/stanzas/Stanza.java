@@ -73,7 +73,7 @@ public class Stanza {
 		this.rejected = true;
 	}
 	
-	public boolean rejected() {
+	public boolean isrejected() {
 		return rejected;
 	}
 	
