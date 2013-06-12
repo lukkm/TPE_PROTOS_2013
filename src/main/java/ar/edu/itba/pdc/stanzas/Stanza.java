@@ -10,6 +10,7 @@ public class Stanza {
 	private StanzaType type;
 	private boolean completed, rejected;
 	private JabberElement element;
+	private String xmlString = "";
 	
 	public Stanza() {
 		this.completed = false;
@@ -28,6 +29,14 @@ public class Stanza {
 	
 	public String getType() {
 		return type.toString();
+	}
+	
+	public String getXMLString() {
+		return xmlString;
+	}
+	
+	public void setXMLString(String xmlString) {
+		this.xmlString = xmlString;
 	}
 	
 	public void complete() {

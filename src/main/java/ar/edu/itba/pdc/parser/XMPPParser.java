@@ -22,15 +22,16 @@ public class XMPPParser {
 	
 	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws ParserConfigurationException, IOException, IncompleteElementsException {
 		
-		/* Medio feo, ver como se soluciona */
-		String xmlString = new String(xmlStream.array()).substring(0, length);
+		String xmlString = new String(xmlStream.array());
+		xmlString = xmlString.substring(0, length);
 		
-		/* Cambiar (Esto es porq el elemento stream nunca cierra y crashea) */
 		if(xmlString.contains("<stream:")) {
-			System.out.println("Empieza el stream!");
-			return new LinkedList<Stanza>();
+			Stanza s = new Stanza();
+			s.setXMLString(xmlString);
+			List<Stanza> streamList = new LinkedList<Stanza>();
+			streamList.add(s);
+			return streamList;
 		} else {		
-			/* Cambiar, atado a la implementacion anterior */
 			String newString = "<xmpp-proxy>" + xmlString + "</xmpp-proxy>";
 			byte[] xmlBytes = newString.getBytes();
 			System.out.println("Parsing XML: " + newString);
@@ -56,6 +57,7 @@ public class XMPPParser {
 				}
 				return handler.getStanzaList();
 			} catch (SAXException e) {
+				e.printStackTrace();
 				throw new IncompleteElementsException();
 			}
 		}

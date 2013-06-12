@@ -19,6 +19,8 @@ public class XMPPHandler extends DefaultHandler {
 	private Stanza currentStanza;
 	private int indentCount;
 	
+	private StringBuffer currentXMLElement;
+	
 	private ParsingState parsingState = ParsingState.parsingStart;
 	private StateCallback callback = null;
 	
@@ -36,6 +38,7 @@ public class XMPPHandler extends DefaultHandler {
 	public void startElement(String s, String s1, String elementName, Attributes attributes) throws SAXException {
 		if (indentCount == 1) {
 			currentStanza = new Stanza();
+			currentXMLElement = new StringBuffer();
 			
 			/* Element name parsing */
 			if (elementName.equals("message")) {
@@ -52,8 +55,7 @@ public class XMPPHandler extends DefaultHandler {
 					currentStanza.setElement(JabberElement.createJIDConfiguration());
 					parsingState = ParsingState.authBody;
 				}
-			}
-			
+			} 	
 			
 		} else if (indentCount > 0){
 			if (currentStanza.isMessage()) {
@@ -67,17 +69,22 @@ public class XMPPHandler extends DefaultHandler {
 					((Message)currentStanza.getElement()).setActiveXmlns(attributes.getValue("xmlns"));
 					this.parsingState = ParsingState.activeState;
 				}
-				
 			}
 		}
 		
-		 indentCount++; 
+		if (indentCount > 0)
+			currentXMLElement.append(generateXMLOpeningTag(elementName, attributes));
+		
+		indentCount++; 
 	}	
 	 
 	public void endElement(String s, String s1, String element) throws SAXException {
 		 indentCount--;
+		 if (indentCount > 0)
+			 currentXMLElement.append(generateXMLClosingTag(element));
 		 if (indentCount == 1) {
 			 currentStanza.complete();
+			 currentStanza.setXMLString(currentXMLElement.toString());
 			 stanzas.add(currentStanza);
 			 System.out.println("Completada stanza: " + element);
 		 }
@@ -103,6 +110,8 @@ public class XMPPHandler extends DefaultHandler {
 					((Message)currentStanza.getElement()).setActive(str);
 				break;
 		}
+		if (indentCount > 0) 
+			currentXMLElement.append(str);
 	}
 	
 	public List<Stanza> getStanzaList() {
@@ -115,6 +124,24 @@ public class XMPPHandler extends DefaultHandler {
 	
 	public void setState(ParsingState state) {
 		this.parsingState = state;
+	}
+	
+	private StringBuffer generateXMLOpeningTag(String name, Attributes attributes) {
+		StringBuffer sb = new StringBuffer("<");
+		sb.append(name);
+		for (int i = 0; i < attributes.getLength(); i++) {
+			sb.append(" ");
+			sb.append(attributes.getLocalName(i));
+			sb.append("='");
+			sb.append(attributes.getValue(i));
+			sb.append("'");
+		}
+		sb.append(">");
+		return sb;
+	}
+	
+	private StringBuffer generateXMLClosingTag(String name) {
+		return new StringBuffer("</" + name + ">");
 	}
 
 }

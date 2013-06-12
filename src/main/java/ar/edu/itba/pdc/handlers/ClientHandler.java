@@ -20,7 +20,6 @@ import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.Message;
-import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
@@ -64,9 +63,6 @@ public class ClientHandler implements TCPHandler {
 		SocketChannel serverChannel = null;
 
 		if (!connection.hasConnectedServer()) {
-
-			/* A implementar bien dependiendo del read que haga */
-			
 			if (!connection.connected()) {				
 				connection.handleConnectionStanza(s);
 				if (connection.readyToConnectToServer()) {					
@@ -103,10 +99,11 @@ public class ClientHandler implements TCPHandler {
 						connection.getStoredBytes() + bytes);
 				connection.clearStoredBytes();
 				for (Stanza stanza : stanzaList) {
-					
 					for (Filter f : filterList)
 						f.apply(stanza);
 	
+					
+					
 					if (stanza.isMessage()) {
 						Message msg = (Message) stanza.getElement();
 	
@@ -117,22 +114,23 @@ public class ClientHandler implements TCPHandler {
 								.getTo().contains(connection.getClientJID()))
 								&& stanza.isrejected()) {
 							connection.sendMessage(s, stanza);
+						}				
+					} else if(stanza.isJIDConfiguration()) {
+						JIDConfiguration jid = (JIDConfiguration) stanza
+								.getElement();
+						connection.setClientJID(jid.getJID()); 
+					} else {
+						if (s == connection.getClientChannel()) {
+							connection.send(
+									connection.getServerChannel(), stanza);
 						} else {
-							if (msg.getMessage() != null) {
-	
-								if (s == connection.getClientChannel()) {
-									connection.sendMessage(
-											connection.getServerChannel(), stanza);
-								} else {
-									connection.sendMessage(
-											connection.getClientChannel(), stanza);
-								}
-							}
+							connection.send(
+									connection.getClientChannel(), stanza);
 						}
-						updateSelectionKeys(connection);
-						return null; /* Ver bien que hacer */
 					}
 				}
+				updateSelectionKeys(connection);
+				return null;
 			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
 			} catch (IncompleteElementsException e) {
@@ -140,38 +138,38 @@ public class ClientHandler implements TCPHandler {
 				connection.storeBytes(bytes);
 			}
 	
-			if (stanzaList != null) {
-				for (Stanza stanza : stanzaList) {
-					if (stanza.isMessage()) {
-						Message message = (Message) stanza.getElement();
-						System.out
-								.println("<--------------------------- MESSAGE --------------------------->");
-						System.out.println("From: " + message.getFrom());
-						System.out.println("To: " + message.getTo());
-						System.out.println("Body: " + message.getMessage());
-						System.out
-								.println("<--------------------------------------------------------------->");
-					} else if (stanza.isJIDConfiguration()) {
-						JIDConfiguration jid = (JIDConfiguration) stanza
-								.getElement(); /* ESTO ES IMPORTANTE */
-						connection.setClientJID(jid.getJID()); /* ESTO ES IMPORTANTE */
-						System.out
-								.println("<--------------------------- JID CONFIGURATION --------------------------->");
-						System.out.println("JID: " + jid.getJID());
-						System.out
-								.println("<------------------------------------------------------------------------->");
-					} else if (stanza.isPresence()) {
-						Presence presence = (Presence) stanza.getElement();
-						System.out
-								.println("<--------------------------- PRESENCE --------------------------->");
-						System.out.println("From: " + presence.getFrom());
-						System.out.println("To: " + presence.getTo());
-						System.out.println("Type: " + presence.getType());
-						System.out
-								.println("<---------------------------------------------------------------->");
-					}
-				}
-			}
+//			if (stanzaList != null) {
+//				for (Stanza stanza : stanzaList) {
+//					if (stanza.isMessage()) {
+//						Message message = (Message) stanza.getElement();
+//						System.out
+//								.println("<--------------------------- MESSAGE --------------------------->");
+//						System.out.println("From: " + message.getFrom());
+//						System.out.println("To: " + message.getTo());
+//						System.out.println("Body: " + message.getMessage());
+//						System.out
+//								.println("<--------------------------------------------------------------->");
+//					} else if (stanza.isJIDConfiguration()) {
+//						JIDConfiguration jid = (JIDConfiguration) stanza
+//								.getElement(); /* ESTO ES IMPORTANTE */
+//						connection.setClientJID(jid.getJID()); /* ESTO ES IMPORTANTE */
+//						System.out
+//								.println("<--------------------------- JID CONFIGURATION --------------------------->");
+//						System.out.println("JID: " + jid.getJID());
+//						System.out
+//								.println("<------------------------------------------------------------------------->");
+//					} else if (stanza.isPresence()) {
+//						Presence presence = (Presence) stanza.getElement();
+//						System.out
+//								.println("<--------------------------- PRESENCE --------------------------->");
+//						System.out.println("From: " + presence.getFrom());
+//						System.out.println("To: " + presence.getTo());
+//						System.out.println("Type: " + presence.getType());
+//						System.out
+//								.println("<---------------------------------------------------------------->");
+//					}
+//				}
+//			}
 	
 			if (!connection.hasStoredBytes()) {
 				connection.synchronizeChannelBuffers(s);

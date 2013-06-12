@@ -187,6 +187,10 @@ public class ProxyConnection {
 		buffersMap.get(s).clearBuffer(BufferType.read);
 	}
 	
+	public void send(SocketChannel s, Stanza stanza) {
+		sendMessage(s, stanza.getXMLString().getBytes());
+	}
+	
 	public boolean readyToConnectToServer() {
 		return state == ConnectionState.ready;
 	}
