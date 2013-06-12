@@ -7,6 +7,7 @@ import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class AdminParser {
@@ -95,7 +96,6 @@ public class AdminParser {
 	}
 	
 	private void executeGetCommand(JSONObject jsonObject, String cmd) {
-		/* Ver como hacer el get */
-		
+		/* Ver como hacer el get*/
 	}
 }

@@ -27,19 +27,21 @@ public class StatisticsFilter implements Filter{
 	public StatisticsFilter() {
 		if (usersStatistics == null) {
 			usersStatistics = new HashMap<String, PersonalStatistic>();
-		initialStatisticsTime = System.currentTimeMillis();
+			initialStatisticsTime = System.currentTimeMillis();
 //			setInterval(AdminParser.getInterval()) // desde el archivo conf
 		}
 	}
-
+	
 	public void getStatistics() {
 		
 		int currInterval = getCurrentInterval();
 		int globalTotalAccesses = 0, globalTotalByteTransfers = 0;
 		int[] globalAccessByInterval = new int[currInterval], byteTransferByInterval = new int[currInterval];
 		Date date = new Date(System.currentTimeMillis());
+		String slash = System.getProperty("path.separator");
+		String home = System.getProperty("user.home");
 		try {
-			FileWriter fstream = new FileWriter("~/ProxyStatistics" + date + ".txt");
+			FileWriter fstream = new FileWriter(home + slash + "ProxyStatistics" + slash + date + ".txt");
 			BufferedWriter out = new BufferedWriter(fstream);
 			out.write("Estadistica del proxy - " + date + "\n\n");
 			for (PersonalStatistic ps : usersStatistics.values()) {
