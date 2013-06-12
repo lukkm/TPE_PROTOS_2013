@@ -24,6 +24,8 @@ public class XMPPParser {
 		
 		String xmlString = new String(xmlStream.array());
 		xmlString = xmlString.substring(0, length);
+		xmlString = xmlString.replace((char)0, ' ');
+		xmlString = xmlString.trim();
 		
 		if(xmlString.contains("<stream:")) {
 			Stanza s = new Stanza();

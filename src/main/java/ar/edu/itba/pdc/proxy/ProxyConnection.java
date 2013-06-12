@@ -136,12 +136,15 @@ public class ProxyConnection {
 		
 		int bytesRead = s.read(buffersMap.get(s).getBuffer(BufferType.read));
 
-		String message = new String(buffersMap.get(s).getBuffer(BufferType.read).array());
+		String message = "";
+		
+		if (bytesRead != -1)
+			message = new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, bytesRead);
 		
 		if (s == client)
-			System.out.println("Leido del cliente: " + message.substring(0, (bytesRead == -1) ? message.length() : bytesRead));
+			System.out.println("Leido del cliente: " + message);
 		else
-			System.out.println("Leido del server: " + message.substring(0, (bytesRead == -1) ? message.length() : bytesRead));
+			System.out.println("Leido del server: " + message);
 		
 		if (bytesRead == -1) {
 			/* EOF - Hay que cerrar el canal */

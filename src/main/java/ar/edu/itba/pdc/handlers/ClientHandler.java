@@ -170,7 +170,7 @@ public class ClientHandler implements TCPHandler {
 //					}
 //				}
 //			}
-	
+			
 			if (!connection.hasStoredBytes()) {
 				connection.synchronizeChannelBuffers(s);
 				updateSelectionKeys(connection);
