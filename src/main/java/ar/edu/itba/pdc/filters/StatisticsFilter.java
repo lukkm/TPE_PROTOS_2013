@@ -2,17 +2,19 @@ package ar.edu.itba.pdc.filters;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import ar.edu.itba.pdc.jabber.JabberElement;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class StatisticsFilter implements Filter{
 	
-	private static final int DEFAULT_INTERVAL = 600000; // en milisegundos
+	private static final int DEFAULT_INTERVAL = 120000; // 2 minutos en milisegundos
 	private static final int TRANSFER_UNIT = 1024;
 	private static final int ACCESS_UNIT = 1;
 	private static int interval = DEFAULT_INTERVAL;
@@ -25,20 +27,23 @@ public class StatisticsFilter implements Filter{
 	public StatisticsFilter() {
 		if (usersStatistics == null) {
 			usersStatistics = new HashMap<String, PersonalStatistic>();
-		initialStatisticsTime = System.currentTimeMillis();
-//			interval = desde archivo conf
+			initialStatisticsTime = System.currentTimeMillis();
+//			setInterval(AdminParser.getInterval()) // desde el archivo conf
 		}
 	}
-
+	
 	public void getStatistics() {
 		
 		int currInterval = getCurrentInterval();
 		int globalTotalAccesses = 0, globalTotalByteTransfers = 0;
 		int[] globalAccessByInterval = new int[currInterval], byteTransferByInterval = new int[currInterval];
-		
+		Date date = new Date(System.currentTimeMillis());
+		String slash = System.getProperty("path.separator");
+		String home = System.getProperty("user.home");
 		try {
-			FileWriter fstream = new FileWriter("~/ProxyStatistics" + currInterval + ".txt");
+			FileWriter fstream = new FileWriter(home + slash + "ProxyStatistics" + slash + date + ".txt");
 			BufferedWriter out = new BufferedWriter(fstream);
+			out.write("Estadistica del proxy - " + date + "\n\n");
 			for (PersonalStatistic ps : usersStatistics.values()) {
 				
 				out.write("Estadistica del Usuario: " + ps.jid + "\n");
@@ -66,6 +71,8 @@ public class StatisticsFilter implements Filter{
 				printHistogram(userByteTransferByInterval, currInterval, TRANSFER_UNIT);
 			}
 			out.write("Estadistica General\n");
+			out.write("Accesos totales al sistema: " + globalTotalAccesses);
+			out.write("Bytes transferidos del sistema: " + globalTotalByteTransfers);
 			out.write("Histograma de accesos totales: \n");
 			printHistogram(globalAccessByInterval, currInterval, ACCESS_UNIT);
 			out.write("Histograma de transferencias totales: \n");
@@ -82,9 +89,13 @@ public class StatisticsFilter implements Filter{
 		interval = minutes*60*1000;
 	}
 	
+//	public void beginStatistics() {
+//		initialStatisticsTime = System.currentTimeMillis(); 
+//	}
+	
 	public void enableStatistics() {
-		if (initialStatisticsTime == -1)
-			beginStatistics();
+//		if (initialStatisticsTime == -1)
+//			beginStatistics();
 		statisticsEnabled = true;
 	}
 	
@@ -92,12 +103,9 @@ public class StatisticsFilter implements Filter{
 		statisticsEnabled = false;
 	}
 	
-	public void beginStatistics() {
-		initialStatisticsTime = System.currentTimeMillis(); 
-	}
 	
 	private int getCurrentInterval() {
-		return ((int)((System.currentTimeMillis()-initialStatisticsTime))/(interval));
+		return (int)((System.currentTimeMillis()-initialStatisticsTime)/interval);
 	}
 	
 	private String printHistogram(int[] array, int interval, int unit) {
@@ -148,22 +156,17 @@ public class StatisticsFilter implements Filter{
 	/* fin clase interna */
 	
 	public void apply(Stanza stanza) {
-		if (stanza.getElement() != null) {
-			String from = stanza.getElement().getFrom();
-			if (from != null) {
+		String from;
+		JabberElement je;
+		if (stanza != null && (je = stanza.getElement()) != null && (from = je.getFrom()) != null) {
 				if (!usersStatistics.containsKey(from)) {
 					usersStatistics.put(from, new PersonalStatistic(from));
 				}
 				if (stanza.isMessage()) {
-					usersStatistics.get(from).applyFilter((Message) stanza.getElement());
+					usersStatistics.get(from).applyFilter((Message) je);
 				} else if (stanza.isPresence()) {
-					usersStatistics.get(from).applyFilter((Presence) stanza.getElement());
+					usersStatistics.get(from).applyFilter((Presence) je);
 				}
-			}
 		}
 	}
-//	
-//	private int getCurrentInterval() {
-//		return ((int)(System.currentTimeMillis()-initialStatisticsTime))%(interval*1000);
-//	}
 }
