@@ -1,6 +1,5 @@
 package ar.edu.itba.pdc.stanzas;
 
-import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.JabberElement;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
@@ -57,10 +56,6 @@ public class Stanza {
 	
 	public boolean isPresence() {
 		return element != null && element.getClass() == Presence.class;
-	}
-	
-	public boolean isJIDConfiguration() {
-		return element != null && element.getClass() == JIDConfiguration.class;
 	}
 	
 	public JabberElement getElement() {

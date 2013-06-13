@@ -18,7 +18,6 @@ import ar.edu.itba.pdc.filters.Filter;
 import ar.edu.itba.pdc.filters.SilentUsersFilter;
 import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
-import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.proxy.BufferType;
@@ -117,10 +116,6 @@ public class ClientHandler implements TCPHandler {
 						if (rejected)
 							connection.sendMessage(s, stanza);
 
-					} else if(stanza.isJIDConfiguration()) {
-						JIDConfiguration jid = (JIDConfiguration) stanza
-								.getElement();
-						connection.setClientJID(jid.getJID()); 
 					}
 					
 					if (!rejected)

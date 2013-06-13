@@ -7,7 +7,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.JabberElement;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
@@ -22,16 +21,13 @@ public class XMPPHandler extends DefaultHandler {
 	private StringBuffer currentXMLElement;
 	
 	private ParsingState parsingState = ParsingState.parsingStart;
-	private StateCallback callback = null;
 	
-	public XMPPHandler(StateCallback callback) {
-		this.callback = callback;
+	public XMPPHandler() {
 		stanzas = new LinkedList<Stanza>();
 		indentCount = 0;
 	}
 	
-	public XMPPHandler(StateCallback callback, ParsingState state) {
-		this(callback);
+	public XMPPHandler(ParsingState state) {
 		this.parsingState = state;
 	}
 	
@@ -46,15 +42,6 @@ public class XMPPHandler extends DefaultHandler {
 			} else if (elementName.equals("presence")) {
 				currentStanza.setElement(JabberElement.createPresence(attributes.getValue("from"), attributes.getValue("to")));
 				((Presence)currentStanza.getElement()).setType(attributes.getValue("type"));
-			} else if (elementName.equals("challenge")) {
-				if (attributes.getValue("xmlns") != null && attributes.getValue("xmlns").equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
-					callback.changeState(ParsingState.waitingClientAuthResponse);
-				}
-			} else if (elementName.equals("response") && parsingState == ParsingState.waitingClientAuthResponse) {
-				if (attributes.getValue("xmlns").equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
-					currentStanza.setElement(JabberElement.createJIDConfiguration());
-					parsingState = ParsingState.authBody;
-				}
 			} 	
 			
 		} else if (indentCount > 0){
@@ -97,9 +84,6 @@ public class XMPPHandler extends DefaultHandler {
 			case messageBody:
 				((Message)(currentStanza.getElement())).setMessage(str);
 				parsingState = ParsingState.parsingStart;
-				break;
-			case authBody:
-				((JIDConfiguration)(currentStanza.getElement())).setJID(str);
 				break;
 			case presenceDelay:
 				if (currentStanza.isPresence())
