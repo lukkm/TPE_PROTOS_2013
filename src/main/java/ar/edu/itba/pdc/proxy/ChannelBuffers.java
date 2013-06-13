@@ -91,4 +91,12 @@ public class ChannelBuffers {
 		buf.flip();
 		setBuffer(type, ByteBuffer.allocate(buf.capacity() * 2).put(buf));
 	}
+	
+	public boolean hasRemainingFor(BufferType type) {
+		return buffers.get(type) != null && buffers.get(type).hasRemaining();
+	}
+	
+	public boolean hasInformationFor(BufferType type) {
+		return buffers.get(type) != null && (buffers.get(type).capacity() != buffers.get(type).remaining());
+	}
 }

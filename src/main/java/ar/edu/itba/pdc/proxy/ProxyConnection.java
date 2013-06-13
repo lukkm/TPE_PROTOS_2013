@@ -84,7 +84,6 @@ public class ProxyConnection {
 	}
 	
 	public void expandBuffer(SocketChannel s, BufferType type) {
-		
 		ChannelBuffers buffers = buffersMap.get(s);
 		buffers.expandBuffer(type);
 		System.out.println("Quedo en el buffer : " + new String(buffers.getBuffer(type).array()));
@@ -116,12 +115,12 @@ public class ProxyConnection {
 		int bytesWrote = 0;
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
-			if (channelBuffers != null && channelBuffers.getBuffer(BufferType.write).hasRemaining()) {
+			if (channelBuffers != null && channelBuffers.hasRemainingFor(BufferType.write)) {
 				System.out.println("Escribiendo");
-				channelBuffers.getBuffer(BufferType.write).flip();
+				channelBuffers.flipBuffer(BufferType.write);
 				bytesWrote = s.write(channelBuffers.getBuffer(BufferType.write));
 				System.out.println("Bytes escritos: " + bytesWrote);
-				channelBuffers.getBuffer(BufferType.write).clear();
+				channelBuffers.clearBuffer(BufferType.write);
 			}
 		}
 		return bytesWrote;
@@ -139,7 +138,7 @@ public class ProxyConnection {
 		String message = "";
 		
 		if (bytesRead != -1)
-			message = new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, bytesRead);
+			message = new String(buffersMap.get(s).getBufferArray(BufferType.read)).substring(0, bytesRead);
 		
 		if (s == client)
 			System.out.println("Leido del cliente: " + message);
@@ -156,12 +155,12 @@ public class ProxyConnection {
 		return bytesRead;
 	}
 	
-	public void synchronizeChannelBuffers(SocketChannel s) {
-		if (s == client)
-			buffersMap.get(s).synchronizeBuffers(buffersMap.get(server));
-		else
-			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
-	}
+//	public void synchronizeChannelBuffers(SocketChannel s) {
+//		if (s == client)
+//			buffersMap.get(s).synchronizeBuffers(buffersMap.get(server));
+//		else
+//			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
+//	}
 
 	public String getClientJID() {
 		return clientJID;
