@@ -16,7 +16,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
 import ar.edu.itba.pdc.filters.Filter;
 import ar.edu.itba.pdc.filters.SilentUsersFilter;
-import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.jabber.JIDConfiguration;
@@ -43,7 +42,7 @@ public class ClientHandler implements TCPHandler {
 
 	private void initialize() {
 		filterList.add(new SilentUsersFilter());
-		filterList.add(new StatisticsFilter());
+//		filterList.add(new StatisticsFilter());
 		filterList.add(new TransformationFilter());
 	}
 
@@ -103,32 +102,30 @@ public class ClientHandler implements TCPHandler {
 					for (Filter f : filterList)
 						f.apply(stanza);
 	
-					
+					boolean rejected = false;
 					
 					if (stanza.isMessage()) {
 						Message msg = (Message) stanza.getElement();
 	
 						if (msg.getFrom() == null && s == connection.getClientChannel())
 							msg.setFrom(connection.getClientJID());
-					
-						if ((msg.getFrom().contains(connection.getClientJID()) || msg
+
+						rejected = (msg.getFrom().contains(connection.getClientJID()) || msg
 								.getTo().contains(connection.getClientJID()))
-								&& stanza.isrejected()) {
+								&& stanza.isrejected();
+					
+						if (rejected)
 							connection.sendMessage(s, stanza);
-						}				
+
 					} else if(stanza.isJIDConfiguration()) {
 						JIDConfiguration jid = (JIDConfiguration) stanza
 								.getElement();
 						connection.setClientJID(jid.getJID()); 
-					} else {
-						if (s == connection.getClientChannel()) {
-							connection.send(
-									connection.getServerChannel(), stanza);
-						} else {
-							connection.send(
-									connection.getClientChannel(), stanza);
-						}
 					}
+					
+					if (!rejected)
+						sendToOppositeChannel(connection, s, stanza);
+				
 				}
 				updateSelectionKeys(connection);
 				return null;
@@ -211,4 +208,15 @@ public class ClientHandler implements TCPHandler {
 			}
 		}
 	}
+
+	public void sendToOppositeChannel(ProxyConnection connection, SocketChannel s, Stanza stanza) {
+		if (s == connection.getClientChannel()) {
+			connection.send(
+					connection.getServerChannel(), stanza);
+		} else {
+			connection.send(
+					connection.getClientChannel(), stanza);
+		}
+	}
+
 }

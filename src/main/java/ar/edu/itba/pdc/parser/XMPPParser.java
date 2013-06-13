@@ -23,9 +23,7 @@ public class XMPPParser {
 	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws ParserConfigurationException, IOException, IncompleteElementsException {
 		
 		String xmlString = new String(xmlStream.array());
-		xmlString = xmlString.substring(0, length);
-		xmlString = xmlString.replace((char)0, ' ');
-		xmlString = xmlString.trim();
+		xmlString = xmlString.substring(0, xmlStream.position());
 		
 		if(xmlString.contains("<stream:")) {
 			Stanza s = new Stanza();
@@ -59,7 +57,6 @@ public class XMPPParser {
 				}
 				return handler.getStanzaList();
 			} catch (SAXException e) {
-				e.printStackTrace();
 				throw new IncompleteElementsException();
 			}
 		}
