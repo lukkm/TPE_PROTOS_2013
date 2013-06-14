@@ -27,10 +27,6 @@ public class XMPPHandler extends DefaultHandler {
 		indentCount = 0;
 	}
 	
-	public XMPPHandler(ParsingState state) {
-		this.parsingState = state;
-	}
-	
 	public void startElement(String s, String s1, String elementName, Attributes attributes) throws SAXException {
 		if (indentCount == 1) {
 			currentStanza = new Stanza();

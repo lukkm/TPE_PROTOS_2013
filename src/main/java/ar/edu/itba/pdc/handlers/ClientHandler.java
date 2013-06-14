@@ -113,7 +113,8 @@ public class ClientHandler implements TCPHandler {
 					
 						if (rejected)
 							connection.sendMessage(s, stanza);
-
+						else 
+							System.out.println("Send message: " + msg.getMessage());
 					}
 					
 					if (!rejected)
