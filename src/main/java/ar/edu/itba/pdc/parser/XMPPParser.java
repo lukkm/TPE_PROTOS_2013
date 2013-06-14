@@ -18,7 +18,7 @@ import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPParser {
 
-	public List<Stanza> parse (ByteBuffer xmlStream, int length) throws ParserConfigurationException, IOException, IncompleteElementsException {
+	public List<Stanza> parse (ByteBuffer xmlStream) throws ParserConfigurationException, IOException, IncompleteElementsException {
 		
 		String xmlString = new String(xmlStream.array());
 		xmlString = xmlString.substring(0, xmlStream.position());

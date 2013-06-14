@@ -94,9 +94,7 @@ public class ClientHandler implements TCPHandler {
 			List<Stanza> stanzaList = null;
 			
 			try {
-				stanzaList = parser.parse(connection.getBuffer(s, BufferType.read),
-						connection.getStoredBytes() + bytes);
-				connection.clearStoredBytes();
+				stanzaList = parser.parse(connection.getBuffer(s, BufferType.read));
 				for (Stanza stanza : stanzaList) {
 					for (Filter f : filterList)
 						f.apply(stanza);
@@ -128,7 +126,6 @@ public class ClientHandler implements TCPHandler {
 				e.printStackTrace();
 			} catch (IncompleteElementsException e) {
 				connection.expandBuffer(s, BufferType.read);
-				connection.storeBytes(bytes);
 			}
 	
 //			if (stanzaList != null) {

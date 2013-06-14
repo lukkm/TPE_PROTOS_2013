@@ -17,14 +17,12 @@ public class ProxyConnection {
 	private SocketChannel server = null;
 	private SocketChannel client = null;
 	
-	private int storedBytes = 0;
-	
 	/* Client connection parameters */
 	private String clientJID = null;
 	private String clientUsername = null;
 	
 	/* Client Streams */
-	protected static final String INITIAL_STREAM           = "<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' ";
+	protected static final String INITIAL_STREAM = "<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' ";
 
 	/* Server connection parameters */
 	private String serverName = null;
@@ -52,22 +50,6 @@ public class ProxyConnection {
 	public void setServer(SocketChannel server) {
 		this.server = server;
 		buffersMap.put(server, new ChannelBuffers());
-	}
-	
-	public void storeBytes(int bytes) {
-		this.storedBytes += bytes;
-	}
-	
-	public void clearStoredBytes() {
-		this.storedBytes = 0;
-	}
-	
-	public int getStoredBytes() {
-		return storedBytes;
-	}
-	
-	public boolean hasStoredBytes() {
-		return storedBytes > 0;
 	}
 	
 	public SocketChannel getServerChannel() {
@@ -100,7 +82,7 @@ public class ProxyConnection {
 	}
 	
 	public boolean hasInformationForChannel(SocketChannel s) {
-		return buffersMap.get(s) != null && buffersMap.get(s).getBuffer(BufferType.write).capacity() != buffersMap.get(s).getBuffer(BufferType.write).remaining();
+		return buffersMap.get(s) != null && buffersMap.get(s).hasInformationFor(BufferType.write);
 	}
 	
 	public boolean hasServer() {
