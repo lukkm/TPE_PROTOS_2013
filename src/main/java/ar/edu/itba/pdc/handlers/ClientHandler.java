@@ -15,6 +15,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
 import ar.edu.itba.pdc.filters.Filter;
+import ar.edu.itba.pdc.filters.Multiplexing;
 import ar.edu.itba.pdc.filters.SilentUsersFilter;
 import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.filters.TransformationFilter;
@@ -69,13 +70,12 @@ public class ClientHandler implements TCPHandler {
 					/* Aca hay que hacer un get del server channel antes de conectarlo */
 					String username = connection.getClientUsername();
 					serverChannel = SocketChannel.open();
-					if (username == "TO_REFACTOR" /*Aca va a ir el codigo que ve si esta multiplexado o no*/) {
-						
-					} else {
-						serverChannel.connect(new InetSocketAddress("hermes.jabber.org",
-								5222));
-						connection.setServerName("jabber.org");
-					}
+					String serverToConnect = Multiplexing.getInstance().getUserServer(username);
+					System.out.println("---------------------------------------------------------------------");
+					System.out.println("Connecting to: " + serverToConnect);
+					System.out.println("---------------------------------------------------------------------");
+					serverChannel.connect(new InetSocketAddress(serverToConnect, 5222));
+					connection.setServerName("jabber.org");
 					serverChannel.configureBlocking(false);
 					serverChannel.register(selector, SelectionKey.OP_READ);
 					connection.setServer(serverChannel);
@@ -99,6 +99,10 @@ public class ClientHandler implements TCPHandler {
 				try {
 					stanzaList = parser.parse(connection.getBuffer(s, BufferType.read));
 					for (Stanza stanza : stanzaList) {
+						if (stanza.getElement() != null && connection.connected())
+							if (stanza.getElement().getFrom() == null && s == connection.getClientChannel())
+									stanza.getElement().setFrom(connection.getClientJID());
+						
 						for (Filter f : filterList)
 							f.apply(stanza);
 		
@@ -107,17 +111,12 @@ public class ClientHandler implements TCPHandler {
 						if (stanza.isMessage()) {
 							Message msg = (Message) stanza.getElement();
 		
-							if (msg.getFrom() == null && s == connection.getClientChannel())
-								msg.setFrom(connection.getClientJID());
-	
 							rejected = (msg.getFrom().contains(connection.getClientJID()) || msg
 									.getTo().contains(connection.getClientJID()))
 									&& stanza.isrejected();
 						
-							if (rejected)
-								connection.sendMessage(s, stanza);
-							else 
-								System.out.println("Send message: " + msg.getMessage());
+							if (rejected && connection.getClientChannel() == s)
+								connection.send(s, stanza);
 						}
 						
 						if (!rejected)
@@ -136,43 +135,6 @@ public class ClientHandler implements TCPHandler {
 			} else {
 				key.cancel();
 			}
-//			if (stanzaList != null) {
-//				for (Stanza stanza : stanzaList) {
-//					if (stanza.isMessage()) {
-//						Message message = (Message) stanza.getElement();
-//						System.out
-//								.println("<--------------------------- MESSAGE --------------------------->");
-//						System.out.println("From: " + message.getFrom());
-//						System.out.println("To: " + message.getTo());
-//						System.out.println("Body: " + message.getMessage());
-//						System.out
-//								.println("<--------------------------------------------------------------->");
-//					} else if (stanza.isJIDConfiguration()) {
-//						JIDConfiguration jid = (JIDConfiguration) stanza
-//								.getElement(); /* ESTO ES IMPORTANTE */
-//						connection.setClientJID(jid.getJID()); /* ESTO ES IMPORTANTE */
-//						System.out
-//								.println("<--------------------------- JID CONFIGURATION --------------------------->");
-//						System.out.println("JID: " + jid.getJID());
-//						System.out
-//								.println("<------------------------------------------------------------------------->");
-//					} else if (stanza.isPresence()) {
-//						Presence presence = (Presence) stanza.getElement();
-//						System.out
-//								.println("<--------------------------- PRESENCE --------------------------->");
-//						System.out.println("From: " + presence.getFrom());
-//						System.out.println("To: " + presence.getTo());
-//						System.out.println("Type: " + presence.getType());
-//						System.out
-//								.println("<---------------------------------------------------------------->");
-//					}
-//				}
-//			}
-			
-//			if (!connection.hasStoredBytes()) {
-//				connection.synchronizeChannelBuffers(s);
-//				updateSelectionKeys(connection);
-//			}
 	
 			return serverChannel;
 		}

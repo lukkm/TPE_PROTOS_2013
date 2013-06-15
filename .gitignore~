@@ -7,7 +7,3 @@
 *.ear
 /bin
 /target
-
-# config files
-*.properties
-logs.html

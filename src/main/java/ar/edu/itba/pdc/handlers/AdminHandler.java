@@ -9,8 +9,7 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.JSONException;
-
+import ar.edu.itba.pdc.exceptions.BadSyntaxException;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.parser.AdminParser;
 import ar.edu.itba.pdc.proxy.BufferType;
@@ -36,17 +35,15 @@ public class AdminHandler implements TCPHandler {
 	public SocketChannel read(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel) key.channel();
 		ChannelBuffers channelBuffers = config.get(s);
-		s.read(channelBuffers.getBuffer(BufferType.read));
+		int bytesRead = s.read(channelBuffers.getBuffer(BufferType.read));
 
 		try {
-			if (!parser.parseCommand(channelBuffers.getBuffer(BufferType.read)))
+			if (!parser.parseCommand(channelBuffers.getBuffer(BufferType.read), bytesRead))
 				System.out.println("Mala sintaxis");
-			else {
-//				s.w
-			}
-				
-		} catch (JSONException e) {
+		} catch (BadSyntaxException e) {
 			System.out.println("Bad syntax");
+		} catch (Exception e) {
+			System.out.println("Careta fixea");
 		}
 		// parseCommand(channelBuffers.getReadBuffer());
 		// channelBuffers.autoSynchronizeBuffers();
