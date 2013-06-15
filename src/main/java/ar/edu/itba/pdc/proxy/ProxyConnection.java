@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 
-import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 
@@ -34,7 +33,8 @@ public class ProxyConnection {
 	
     private ConnectionState state;
     
-	private Map<SocketChannel, ChannelBuffers> buffersMap = new HashMap<SocketChannel, ChannelBuffers>();
+	/* Every socket channel has its own read and write buffers */
+    private Map<SocketChannel, ChannelBuffers> buffersMap = new HashMap<SocketChannel, ChannelBuffers>();
 	
 	public ProxyConnection(SocketChannel server, SocketChannel client) {
 		this(client);
@@ -98,10 +98,8 @@ public class ProxyConnection {
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
 			if (channelBuffers != null && channelBuffers.hasRemainingFor(BufferType.write)) {
-				System.out.println("Escribiendo");
 				channelBuffers.flipBuffer(BufferType.write);
 				bytesWrote = s.write(channelBuffers.getBuffer(BufferType.write));
-				System.out.println("Bytes escritos: " + bytesWrote);
 				channelBuffers.clearBuffer(BufferType.write);
 			}
 		}
@@ -109,76 +107,32 @@ public class ProxyConnection {
 	}
 	
 	public int readFrom(SocketChannel s) throws IOException {
-		/*
-		 * Ver que hago con reads mas grandes que el buffer.
-		 * Inicialmente es transparente, ya que va a volver a entrar con otro read
-		 * Mas adelante hay que ver como procesar esos paquetes.
-		 */
-		
 		int bytesRead = s.read(buffersMap.get(s).getBuffer(BufferType.read));
-
-		String message = "";
-		
-		if (bytesRead != -1)
-			message = new String(buffersMap.get(s).getBufferArray(BufferType.read)).substring(0, bytesRead);
-		
-		if (s == client)
-			System.out.println("Leido del cliente: " + message);
-		else
-			System.out.println("Leido del server: " + message);
 		
 		if (bytesRead == -1) {
-			System.out.println("Estamos en la B");
 			client.close();
 			server.close();
 			return -1;
-			/* EOF - Hay que cerrar el canal */
-		} else if (bytesRead > 0) {
-			/* Aca vemos q hacemos */
-		}
-		/* Ver logica aca */
+		} 
 		
 		return bytesRead;
 	}
 	
-//	public void synchronizeChannelBuffers(SocketChannel s) {
-//		if (s == client)
-//			buffersMap.get(s).synchronizeBuffers(buffersMap.get(server));
-//		else
-//			buffersMap.get(s).synchronizeBuffers(buffersMap.get(client));
-//	}
-
 	public String getClientJID() {
 		return clientJID;
 	}
 	
-	public ConnectionState getState() {
-		return state;
-	}
-
-	public void setClientJID(String clientJID) {
-		this.clientJID = clientJID;
-	}
-	
 	public void appendToBuffer(SocketChannel s, BufferType buffer, byte[] bytes) {
-		System.out.println("appendToBuffeeeeeeeeeer:" + new String(bytes));
 		ChannelBuffers buffers = buffersMap.get(s);
 		buffers.writeToBuffer(buffer, bytes);
 	}
 	
-	public void sendMessage(SocketChannel s, Stanza stanza) {
-		Message message = (Message)stanza.getElement();
-		sendMessage(s, message.getXMLMessage().getBytes());
-	}
-	
 	private void sendMessage(SocketChannel s, byte[] bytes) {
-		System.out.println("SENDMESSAGE PRIVADO:" + new String(bytes));
 		appendToBuffer(s, BufferType.write, bytes);
 		buffersMap.get(s).clearBuffer(BufferType.read);
 	}
 	
 	public void send(SocketChannel s, Stanza stanza) {
-		System.out.println("SEND NOMAS:" + new String(stanza.getXMLString().getBytes()));
 		sendMessage(s, stanza.getXMLString().getBytes());
 	}
 	
@@ -191,7 +145,6 @@ public class ProxyConnection {
 	}
 	
 	public void handleConnectionStanza(SocketChannel s) throws IOException {
-		System.out.println("HANDLERR");
 		int length = readFrom(s);
 		String read = new String(getBuffer(s, BufferType.read).array()).substring(0, length);
 		System.out.println(read);

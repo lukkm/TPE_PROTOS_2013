@@ -114,9 +114,7 @@ public class ClientHandler implements TCPHandler {
 									&& stanza.isrejected();
 						
 							if (rejected)
-								connection.sendMessage(s, stanza);
-							else 
-								System.out.println("Send message: " + msg.getMessage());
+								connection.send(s, stanza);
 						}
 						
 						if (!rejected)
@@ -135,43 +133,6 @@ public class ClientHandler implements TCPHandler {
 			} else {
 				key.cancel();
 			}
-//			if (stanzaList != null) {
-//				for (Stanza stanza : stanzaList) {
-//					if (stanza.isMessage()) {
-//						Message message = (Message) stanza.getElement();
-//						System.out
-//								.println("<--------------------------- MESSAGE --------------------------->");
-//						System.out.println("From: " + message.getFrom());
-//						System.out.println("To: " + message.getTo());
-//						System.out.println("Body: " + message.getMessage());
-//						System.out
-//								.println("<--------------------------------------------------------------->");
-//					} else if (stanza.isJIDConfiguration()) {
-//						JIDConfiguration jid = (JIDConfiguration) stanza
-//								.getElement(); /* ESTO ES IMPORTANTE */
-//						connection.setClientJID(jid.getJID()); /* ESTO ES IMPORTANTE */
-//						System.out
-//								.println("<--------------------------- JID CONFIGURATION --------------------------->");
-//						System.out.println("JID: " + jid.getJID());
-//						System.out
-//								.println("<------------------------------------------------------------------------->");
-//					} else if (stanza.isPresence()) {
-//						Presence presence = (Presence) stanza.getElement();
-//						System.out
-//								.println("<--------------------------- PRESENCE --------------------------->");
-//						System.out.println("From: " + presence.getFrom());
-//						System.out.println("To: " + presence.getTo());
-//						System.out.println("Type: " + presence.getType());
-//						System.out
-//								.println("<---------------------------------------------------------------->");
-//					}
-//				}
-//			}
-			
-//			if (!connection.hasStoredBytes()) {
-//				connection.synchronizeChannelBuffers(s);
-//				updateSelectionKeys(connection);
-//			}
 	
 			return serverChannel;
 		}
