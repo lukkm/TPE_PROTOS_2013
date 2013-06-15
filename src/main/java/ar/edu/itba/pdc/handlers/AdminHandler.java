@@ -21,6 +21,7 @@ public class AdminHandler implements TCPHandler {
 	private Map<SocketChannel, ChannelBuffers> config;
 	private Selector selector;
 	private AdminParser parser;
+	
 
 	public AdminHandler(Selector selector) {
 		this.selector = selector;
@@ -40,6 +41,10 @@ public class AdminHandler implements TCPHandler {
 		try {
 			if (!parser.parseCommand(channelBuffers.getBuffer(BufferType.read)))
 				System.out.println("Mala sintaxis");
+			else {
+//				s.w
+			}
+				
 		} catch (JSONException e) {
 			System.out.println("Bad syntax");
 		}

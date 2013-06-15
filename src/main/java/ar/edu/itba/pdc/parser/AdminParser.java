@@ -7,12 +7,14 @@ import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ar.edu.itba.pdc.filters.ExternalFunction;
 import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class AdminParser {
 
 	private Map<String, CommandType> commands = new HashMap<String, CommandType>();
+	private Map<String, ExternalFunction> extFuns = new HashMap<String, ExternalFunction>();
 	private ConfigurationCommands commandManager;
 
 	public AdminParser() {
@@ -21,8 +23,12 @@ public class AdminParser {
 		commands.put("statistics", CommandType.booleanCommand);
 		commands.put("monitor", CommandType.booleanCommand);
 		commands.put("getStatistics", CommandType.getCommand);
+		commands.put("getMonitor", CommandType.getCommand);
 		commands.put("transformation", CommandType.booleanCommand);
 		commands.put("interval", CommandType.booleanCommand);
+		
+		extFuns.put("getStatistics", new StatisticsFilter());
+//		extFuns.put("getMonitor", new );
 	}
 
 	public boolean parseCommand(ByteBuffer readBuffer) throws JSONException {
@@ -48,7 +54,7 @@ public class AdminParser {
 							accepted = executeListCommand(jsonObject, cmd);
 							break;
 						case getCommand:
-							/*Asignar a respuesta*/ executeGetCommand(jsonObject, cmd);
+							 executeGetCommand(jsonObject, cmd);
 							accepted = true;
 							break;
 						default:
@@ -96,6 +102,6 @@ public class AdminParser {
 	}
 	
 	private void executeGetCommand(JSONObject jsonObject, String cmd) {
-		/* Ver como hacer el get*/
+		extFuns.get(cmd).execute();
 	}
 }
