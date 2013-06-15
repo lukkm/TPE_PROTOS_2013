@@ -18,7 +18,7 @@ public class TransformationFilter implements Filter{
 		return instance;
 	}
 	
-	public TransformationFilter() {
+	private TransformationFilter() {
 		changes = new HashMap<Character,String>();
 		changes.put('a', "4");
 		changes.put('e', "3");

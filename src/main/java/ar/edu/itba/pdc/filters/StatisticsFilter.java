@@ -31,7 +31,7 @@ public class StatisticsFilter implements Filter{
 		return instance;
 	}
 	
-	public StatisticsFilter() {
+	private StatisticsFilter() {
 		if (usersStatistics == null) {
 			usersStatistics = new HashMap<String, PersonalStatistic>();
 			initialStatisticsTime = System.currentTimeMillis();
