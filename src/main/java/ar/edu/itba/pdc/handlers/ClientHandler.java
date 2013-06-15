@@ -15,6 +15,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
 import ar.edu.itba.pdc.filters.Filter;
+import ar.edu.itba.pdc.filters.Multiplexing;
 import ar.edu.itba.pdc.filters.SilentUsersFilter;
 import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
@@ -68,13 +69,12 @@ public class ClientHandler implements TCPHandler {
 					/* Aca hay que hacer un get del server channel antes de conectarlo */
 					String username = connection.getClientUsername();
 					serverChannel = SocketChannel.open();
-					if (username == "TO_REFACTOR" /*Aca va a ir el codigo que ve si esta multiplexado o no*/) {
-						
-					} else {
-						serverChannel.connect(new InetSocketAddress("hermes.jabber.org",
-								5222));
-						connection.setServerName("jabber.org");
-					}
+					String serverToConnect = Multiplexing.getInstance().getUserServer(username);
+					System.out.println("---------------------------------------------------------------------");
+					System.out.println("Connecting to: " + serverToConnect);
+					System.out.println("---------------------------------------------------------------------");
+					serverChannel.connect(new InetSocketAddress(serverToConnect, 5222));
+					connection.setServerName("jabber.org");
 					serverChannel.configureBlocking(false);
 					serverChannel.register(selector, SelectionKey.OP_READ);
 					connection.setServer(serverChannel);
