@@ -1,6 +1,5 @@
 package ar.edu.itba.pdc.stanzas;
 
-import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.JabberElement;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
@@ -8,11 +7,13 @@ import ar.edu.itba.pdc.jabber.Presence;
 public class Stanza {
 
 	private StanzaType type;
-	private boolean completed;
+	private boolean completed, rejected;
 	private JabberElement element;
+	private String xmlString = "";
 	
 	public Stanza() {
 		this.completed = false;
+		this.rejected = false;
 	}
 	
 	public Stanza(StanzaType type) {
@@ -27,6 +28,16 @@ public class Stanza {
 	
 	public String getType() {
 		return type.toString();
+	}
+	
+	public String getXMLString() {
+		if (isMessage())
+			return ((Message)element).getXMLMessage();
+		return xmlString;
+	}
+	
+	public void setXMLString(String xmlString) {
+		this.xmlString = xmlString;
 	}
 	
 	public void complete() {
@@ -49,10 +60,6 @@ public class Stanza {
 		return element != null && element.getClass() == Presence.class;
 	}
 	
-	public boolean isJIDConfiguration() {
-		return element != null && element.getClass() == JIDConfiguration.class;
-	}
-	
 	public JabberElement getElement() {
 		return element;
 	}
@@ -67,5 +74,15 @@ public class Stanza {
 	public void setElement(JabberElement element) {
 		this.element = element;
 	}
+	
+	public void reject() {
+		this.rejected = true;
+	}
+	
+	public boolean isrejected() {
+		return rejected;
+	}
+	
+	
 	
 }

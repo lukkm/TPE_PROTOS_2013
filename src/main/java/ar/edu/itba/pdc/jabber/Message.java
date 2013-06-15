@@ -3,8 +3,7 @@ package ar.edu.itba.pdc.jabber;
 public class Message extends JabberElement {
 	
 	private String message = null;
-	private String from;
-	private String to;
+	private String to, activeXmlns, active;
 	
 	public Message(String message, String from, String to) {
 		this(from, to);
@@ -12,7 +11,7 @@ public class Message extends JabberElement {
 	}
 	
 	public Message(String from, String to) {
-		this.from = from;
+		super(from);
 		this.to = to;
 	}
 	
@@ -24,12 +23,20 @@ public class Message extends JabberElement {
 		return message;
 	}
 	
-	public String getFrom() {
-		return from;
+	public void setActive(String active) {
+		this.active = active;
 	}
-
-	public void setFrom(String from) {
-		this.from = from;
+	
+	public void setActiveXmlns(String xmlns) {
+		this.activeXmlns = xmlns;
+	}
+	
+	public String getActive() {
+		return active;
+	}
+	
+	public String getActiveXmlns() {
+		return activeXmlns;
 	}
 
 	public String getTo() {
@@ -38,6 +45,21 @@ public class Message extends JabberElement {
 
 	public void setTo(String to) {
 		this.to = to;
+	}
+	
+	public String getXMLMessage() {
+		String xmlMessage = "<message from='" 
+				+ getFrom() 
+				+ "' to='" 
+				+ getTo() + "' type='chat'>";
+		if (getActive() != null && !getActive().equals("")) {
+			xmlMessage = xmlMessage + "<active xmlns='" + getActiveXmlns() + "'>" + getActive() + "</active>";
+		}
+		xmlMessage = xmlMessage + ("<body>"
+				+ getMessage()
+				+ "</body>"
+				+ "</message>");
+		return xmlMessage;
 	}
 
 	

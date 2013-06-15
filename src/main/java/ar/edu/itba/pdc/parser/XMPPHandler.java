@@ -7,7 +7,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import ar.edu.itba.pdc.jabber.JIDConfiguration;
 import ar.edu.itba.pdc.jabber.JabberElement;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
@@ -19,23 +18,19 @@ public class XMPPHandler extends DefaultHandler {
 	private Stanza currentStanza;
 	private int indentCount;
 	
-	private ParsingState parsingState = ParsingState.parsingStart;
-	private StateCallback callback = null;
+	private StringBuffer currentXMLElement;
 	
-	public XMPPHandler(StateCallback callback) {
-		this.callback = callback;
+	private ParsingState parsingState = ParsingState.parsingStart;
+	
+	public XMPPHandler() {
 		stanzas = new LinkedList<Stanza>();
 		indentCount = 0;
-	}
-	
-	public XMPPHandler(StateCallback callback, ParsingState state) {
-		this(callback);
-		this.parsingState = state;
 	}
 	
 	public void startElement(String s, String s1, String elementName, Attributes attributes) throws SAXException {
 		if (indentCount == 1) {
 			currentStanza = new Stanza();
+			currentXMLElement = new StringBuffer();
 			
 			/* Element name parsing */
 			if (elementName.equals("message")) {
@@ -43,37 +38,36 @@ public class XMPPHandler extends DefaultHandler {
 			} else if (elementName.equals("presence")) {
 				currentStanza.setElement(JabberElement.createPresence(attributes.getValue("from"), attributes.getValue("to")));
 				((Presence)currentStanza.getElement()).setType(attributes.getValue("type"));
-			} else if (elementName.equals("challenge")) {
-				if (attributes.getValue("xmlns") != null && attributes.getValue("xmlns").equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
-					callback.changeState(ParsingState.waitingClientAuthResponse);
-				}
-			} else if (elementName.equals("response") && parsingState == ParsingState.waitingClientAuthResponse) {
-				if (attributes.getValue("xmlns").equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
-					currentStanza.setElement(JabberElement.createJIDConfiguration());
-					parsingState = ParsingState.authBody;
-				}
-			}
-			
+			} 	
 			
 		} else if (indentCount > 0){
 			if (currentStanza.isMessage()) {
-				
+
 				/* Inner element name parsing */
 				if (elementName.equals("body")) {
 					this.parsingState = ParsingState.messageBody;
 				} else if (elementName.equals("delay")) {
 					this.parsingState = ParsingState.presenceDelay;
+				} else if (elementName.equals("active")) {
+					((Message)currentStanza.getElement()).setActiveXmlns(attributes.getValue("xmlns"));
+					this.parsingState = ParsingState.activeState;
 				}
 			}
 		}
 		
-		 indentCount++; 
+		if (indentCount > 0)
+			currentXMLElement.append(generateXMLOpeningTag(elementName, attributes));
+		
+		indentCount++; 
 	}	
 	 
 	public void endElement(String s, String s1, String element) throws SAXException {
 		 indentCount--;
+		 if (indentCount > 0)
+			 currentXMLElement.append(generateXMLClosingTag(element));
 		 if (indentCount == 1) {
 			 currentStanza.complete();
+			 currentStanza.setXMLString(currentXMLElement.toString());
 			 stanzas.add(currentStanza);
 			 System.out.println("Completada stanza: " + element);
 		 }
@@ -87,13 +81,17 @@ public class XMPPHandler extends DefaultHandler {
 				((Message)(currentStanza.getElement())).setMessage(str);
 				parsingState = ParsingState.parsingStart;
 				break;
-			case authBody:
-				((JIDConfiguration)(currentStanza.getElement())).setJID(str);
-				break;
 			case presenceDelay:
-				((Presence)currentStanza.getElement()).setDelay(str);
+				if (currentStanza.isPresence())
+					((Presence)currentStanza.getElement()).setDelay(str);
+				break;
+			case activeState:
+				if (currentStanza.isMessage())
+					((Message)currentStanza.getElement()).setActive(str);
 				break;
 		}
+		if (indentCount > 0 && currentXMLElement != null) 
+			currentXMLElement.append(str);
 	}
 	
 	public List<Stanza> getStanzaList() {
@@ -106,6 +104,24 @@ public class XMPPHandler extends DefaultHandler {
 	
 	public void setState(ParsingState state) {
 		this.parsingState = state;
+	}
+	
+	private StringBuffer generateXMLOpeningTag(String name, Attributes attributes) {
+		StringBuffer sb = new StringBuffer("<");
+		sb.append(name);
+		for (int i = 0; i < attributes.getLength(); i++) {
+			sb.append(" ");
+			sb.append(attributes.getLocalName(i));
+			sb.append("='");
+			sb.append(attributes.getValue(i));
+			sb.append("'");
+		}
+		sb.append(">");
+		return sb;
+	}
+	
+	private StringBuffer generateXMLClosingTag(String name) {
+		return new StringBuffer("</" + name + ">");
 	}
 
 }

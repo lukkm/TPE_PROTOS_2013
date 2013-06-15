@@ -13,6 +13,7 @@ import org.json.JSONException;
 
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.parser.AdminParser;
+import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ChannelBuffers;
 
 public class AdminHandler implements TCPHandler {
@@ -33,10 +34,10 @@ public class AdminHandler implements TCPHandler {
 	public SocketChannel read(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel) key.channel();
 		ChannelBuffers channelBuffers = config.get(s);
-		s.read(channelBuffers.getReadBuffer());
+		s.read(channelBuffers.getBuffer(BufferType.read));
 
 		try {
-			if (!parser.parseCommand(channelBuffers.getReadBuffer()))
+			if (!parser.parseCommand(channelBuffers.getBuffer(BufferType.read)))
 				System.out.println("Mala sintaxis");
 		} catch (JSONException e) {
 			System.out.println("Bad syntax");
@@ -46,14 +47,14 @@ public class AdminHandler implements TCPHandler {
 		// String strCommand = new
 		// String(channelBuffers.getReadBuffer().array());
 
-		channelBuffers.getReadBuffer().clear();
+		channelBuffers.getBuffer(BufferType.read).clear();
 		updateSelectionKeys(s);
 		return null;
 	}
 
 	public void write(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel) key.channel();
-		ByteBuffer wrBuffer = config.get(s).getWriteBuffer();
+		ByteBuffer wrBuffer = config.get(s).getBuffer(BufferType.write);
 		wrBuffer.flip();
 		s.write(wrBuffer);
 		updateSelectionKeys(s);
@@ -63,7 +64,7 @@ public class AdminHandler implements TCPHandler {
 	private void updateSelectionKeys(SocketChannel s)
 			throws ClosedChannelException {
 		ChannelBuffers buffers = config.get(s);
-		if (buffers.getWriteBuffer().capacity() != buffers.getWriteBuffer()
+		if (buffers.getBuffer(BufferType.write).capacity() != buffers.getBuffer(BufferType.write)
 				.remaining()) {
 			s.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		} else {
