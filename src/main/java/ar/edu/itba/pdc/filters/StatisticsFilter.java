@@ -50,7 +50,7 @@ public class StatisticsFilter implements Filter, ExternalFunction {
 			out.newLine();
 			out.newLine();
 			for (PersonalStatistic ps : usersStatistics.values()) {
-
+				System.out.println("Entro en personal Statistics");
 				out.write("Estadistica del Usuario: " + ps.jid);
 				out.newLine();
 
