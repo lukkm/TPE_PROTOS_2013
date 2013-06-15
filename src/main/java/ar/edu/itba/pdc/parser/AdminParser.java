@@ -4,98 +4,51 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import ar.edu.itba.pdc.filters.StatisticsFilter;
+import ar.edu.itba.pdc.exceptions.BadSyntaxException;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class AdminParser {
 
-	private Map<String, CommandType> commands = new HashMap<String, CommandType>();
+	private Map<String, CommandExecutor> commandTypes = new HashMap<String, CommandExecutor>();
 	private ConfigurationCommands commandManager;
 
 	public AdminParser() {
 		commandManager = ConfigurationCommands.getInstance();
-		commands.put("silenceuser", CommandType.listCommand);
-		commands.put("statistics", CommandType.booleanCommand);
-		commands.put("monitor", CommandType.booleanCommand);
-		commands.put("getStatistics", CommandType.getCommand);
-		commands.put("transformation", CommandType.booleanCommand);
-		commands.put("interval", CommandType.booleanCommand);
+		commandTypes.put("silenceuser", ListCommandExecutor.getInstance());
+		commandTypes.put("statistics", BooleanCommandExecutor.getInstance());
+		commandTypes.put("monitor", BooleanCommandExecutor.getInstance());
+		commandTypes.put("getStatistics", GetCommandExecutor.getInstance());
+		commandTypes.put("transformation", BooleanCommandExecutor.getInstance());
+		commandTypes.put("interval", BooleanCommandExecutor.getInstance());
 	}
 
-	public boolean parseCommand(ByteBuffer readBuffer) throws JSONException {
-		JSONObject json = new JSONObject(new String(readBuffer.array()));
-		return jsonParse(json);
-
-	}
-
-	private boolean jsonParse(JSONObject jsonObject) throws JSONException {
-		String[] keys = JSONObject.getNames(jsonObject); // Multiples mensajes
-		if (keys == null) {
-			throw new JSONException("Bad syntax");
-		}
-		for (String string : keys) {
-			for (String cmd : this.commands.keySet()) {
-				if (string.equals(cmd)) {
-					boolean accepted;
-					switch (commands.get(string)) {
-						case booleanCommand:
-							accepted = executeBooleanCommand(jsonObject, cmd);
-							break;
-						case listCommand:
-							accepted = executeListCommand(jsonObject, cmd);
-							break;
-						case getCommand:
-							/*Asignar a respuesta*/ executeGetCommand(jsonObject, cmd);
-							accepted = true;
-							break;
-						default:
-							accepted = false;
-					}
-					if (accepted)
-						commandManager.saveFile();
-					else
-						throw new JSONException("Bad Syntax");
-					break;
-				}
+	public boolean parseCommand(ByteBuffer readBuffer, int bytesRead) throws BadSyntaxException {
+		String fullCommand = new String(readBuffer.array()).substring(0, bytesRead);
+		Map<String, String> commands = new HashMap<String, String>();
+		for (String s : fullCommand.split(";")) {
+			String[] aux = s.split("=");
+			if (aux.length > 1) {
+				commands.put(aux[0].trim(), aux[1].trim());
+			} else {
+				throw new BadSyntaxException();
 			}
 		}
-		return true;
-	}
-	
-	private boolean executeListCommand(JSONObject jsonObject, String cmd) {
-		String oldValue = "";
-		if (commandManager.hasProperty(cmd))
-			oldValue = commandManager.getProperty(cmd);
-		String newValue = "";
-		try {
-			newValue = jsonObject.get(cmd).toString();
-			if (oldValue != null && oldValue.contains(newValue)) {
-				return false;
-			}
-		} catch (JSONException e) {
-			System.out.println("Error JSON");
-		}
+		return takeActions(commands);
+	}	
 
-		if (oldValue != null && !oldValue.equals(""))
-			commandManager.setProperty(cmd, oldValue + ";"
-					+ newValue);
-		else
-			commandManager.setProperty(cmd, newValue);
+	private boolean takeActions(Map<String, String> commands) throws BadSyntaxException {
+		
+		if (commands.isEmpty()) {
+			throw new BadSyntaxException();
+		}
+		for (String cmd : commands.keySet()) {
+			boolean accepted = commandTypes.get(cmd).execute(cmd, commands.get(cmd));
+			if (accepted) {
+				commandManager.saveFile();
+			}
+			else
+				throw new BadSyntaxException();
+		}
 		return true;
-	}
-	
-	private boolean executeBooleanCommand(JSONObject jsonObject, String cmd) throws JSONException {
-		String value = jsonObject.get(cmd).toString().toLowerCase();
-		if (!value.equals("enabled") && !value.equals("disabled"))
-			return false;
-		commandManager.setProperty(cmd, value);
-		return true;
-	}
-	
-	private void executeGetCommand(JSONObject jsonObject, String cmd) {
-		/* Ver como hacer el get*/
 	}
 }
