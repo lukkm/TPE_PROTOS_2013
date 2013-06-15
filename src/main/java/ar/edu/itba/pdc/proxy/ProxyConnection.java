@@ -113,7 +113,12 @@ public class ProxyConnection {
 			client.close();
 			server.close();
 			return -1;
-		} 
+		} else {
+			if (s == client) 
+				System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
+			else
+				System.out.println("Leido del server: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
+		}
 		
 		return bytesRead;
 	}
@@ -183,13 +188,11 @@ public class ProxyConnection {
 				}
 				break;
 			case connectingToServer:
-				if (read.startsWith("<?xml")) {
-						if (read.contains("<stream")) {
-							sendMessage(server, authorizationStream.getBytes());
-							this.state = ConnectionState.connected;
-						} else {
-							this.state = ConnectionState.waitingForServerFeatures;
-						}
+				if (read.contains("<stream")) {
+					sendMessage(server, authorizationStream.getBytes());
+					this.state = ConnectionState.connected;
+				} else if (read.startsWith("<?xml")) {
+					this.state = ConnectionState.waitingForServerFeatures;
 				}
 				break;
 			case waitingForServerFeatures:
@@ -209,7 +212,6 @@ public class ProxyConnection {
 		if (serverName != null) {
 			String stream = INITIAL_STREAM + "to='" + serverName + "' xml:lang=\"en\" xmlns:xml=\"http://www.w3.org/XML/1998/namespace\">";
 			sendMessage(server, stream.getBytes());
-			System.out.println("MESSAGE: " + stream);
 			this.state = ConnectionState.connectingToServer;
 		}
 	}
