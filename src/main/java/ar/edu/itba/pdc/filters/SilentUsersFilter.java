@@ -55,6 +55,10 @@ public class SilentUsersFilter implements Filter {
 				msg.setTo(from);
 				msg.setFrom("admin@xmpp-proxy");
 				msg.setMessage("You have been silenced!");
+				msg.setType("error");
+				msg.setErrorCode(405);
+				msg.setErrorType("cancel");
+				msg.setErrorXMLBody("<not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>");
 				stanza.reject();
 			} else if ((to != null && isSilent(to))) {
 				stanza.reject();

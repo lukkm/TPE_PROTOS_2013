@@ -89,7 +89,7 @@ public class ClientHandler implements TCPHandler {
 			/* Perform the read operation */
 			int bytes = connection.readFrom(s);
 	
-			if (bytes != -1) {
+			if (bytes > 0) {
 				
 				/* Parse what was just read */
 				List<Stanza> stanzaList = null;
@@ -130,7 +130,7 @@ public class ClientHandler implements TCPHandler {
 					connection.expandBuffer(s, BufferType.read);
 				}
 				
-			} else {
+			} else if (bytes == -1) {
 				key.cancel();
 			}
 	
