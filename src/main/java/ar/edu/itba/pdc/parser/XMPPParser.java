@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,6 +16,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 
 import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
+import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPParser {
@@ -22,6 +25,8 @@ public class XMPPParser {
 		
 		String xmlString = new String(xmlStream.array());
 		xmlString = xmlString.substring(0, xmlStream.position());
+		String bodyMessage = null;
+		List<String> messageBodies = new ArrayList<String>();
 		
 		if(xmlString.contains("<stream:")) {
 			Stanza s = new Stanza();
@@ -31,6 +36,17 @@ public class XMPPParser {
 			return streamList;
 		} else {		
 			String newString = "<xmpp-proxy>" + xmlString + "</xmpp-proxy>";
+			int position = 0;
+			while (xmlString.indexOf("<message", position) > -1) {
+				int bodyPosition = xmlString.indexOf("<body", position);
+				position = xmlString.indexOf(">", bodyPosition);
+				int bodyEndingPosition = xmlString.indexOf("</body>", bodyPosition);
+				if (bodyPosition > -1 && bodyEndingPosition > -1) {
+					bodyMessage = xmlString.substring(position + 1, bodyEndingPosition);
+					xmlString = xmlString.substring(0, position + 1) + xmlString.substring(bodyEndingPosition, xmlString.length());
+					messageBodies.add(bodyMessage);
+				}
+			}
 			byte[] xmlBytes = newString.getBytes();
 			System.out.println("Parsing XML: " + newString);
 			InputStream is = new ByteArrayInputStream(xmlBytes);
@@ -44,6 +60,14 @@ public class XMPPParser {
 				parser.parse(is, handler);
 				if (handler.hasIncompleteElements()) {
 					throw new IncompleteElementsException();
+				}
+				List<Stanza> lstStanzas = handler.getStanzaList();
+				Iterator<String> iter = messageBodies.iterator();
+				for (Stanza s : lstStanzas) {
+					if (s.isMessage()) {
+						if (iter.hasNext())
+							((Message)s.getElement()).setMessage(iter.next());
+					}
 				}
 				return handler.getStanzaList();
 			} catch (SAXException e) {
