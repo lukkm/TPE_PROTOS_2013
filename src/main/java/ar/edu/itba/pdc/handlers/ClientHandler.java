@@ -40,7 +40,7 @@ public class ClientHandler implements TCPHandler {
 	}
 
 	private void initialize() {
-		// filterList.add(new StatisticsFilter());
+//		filterList.add(new StatisticsFilter());
 		filterList.add(new TransformationFilter());
 		filterList.add(new SilentUsersFilter());
 	}
@@ -62,23 +62,17 @@ public class ClientHandler implements TCPHandler {
 		SocketChannel serverChannel = null;
 
 		if (!connection.hasConnectedServer()) {
-			if (!connection.connected()) {
+			if (!connection.connected()) {				
 				connection.handleConnectionStanza(s);
-				if (connection.readyToConnectToServer()) {
-					/*
-					 * Aca hay que hacer un get del server channel antes de
-					 * conectarlo
-					 */
+				if (connection.readyToConnectToServer()) {					
+					/* Aca hay que hacer un get del server channel antes de conectarlo */
 					String username = connection.getClientUsername();
 					serverChannel = SocketChannel.open();
-					if (username == "TO_REFACTOR" /*
-												 * Aca va a ir el codigo que ve
-												 * si esta multiplexado o no
-												 */) {
-
+					if (username == "TO_REFACTOR" /*Aca va a ir el codigo que ve si esta multiplexado o no*/) {
+						
 					} else {
-						serverChannel.connect(new InetSocketAddress(
-								"hermes.jabber.org", 5222));
+						serverChannel.connect(new InetSocketAddress("hermes.jabber.org",
+								5222));
 						connection.setServerName("jabber.org");
 					}
 					serverChannel.configureBlocking(false);
@@ -86,7 +80,7 @@ public class ClientHandler implements TCPHandler {
 					connection.setServer(serverChannel);
 					connection.writeFirstStreamToServer();
 					connections.put(serverChannel, connection);
-				}
+				} 
 			}
 			updateSelectionKeys(connection);
 			return serverChannel;
@@ -95,41 +89,37 @@ public class ClientHandler implements TCPHandler {
 
 			/* Perform the read operation */
 			int bytes = connection.readFrom(s);
-
+	
 			if (bytes != -1) {
-
+				
 				/* Parse what was just read */
 				List<Stanza> stanzaList = null;
-
+				
 				try {
-					stanzaList = parser.parse(connection.getBuffer(s,
-							BufferType.read));
+					stanzaList = parser.parse(connection.getBuffer(s, BufferType.read));
 					for (Stanza stanza : stanzaList) {
 						for (Filter f : filterList)
 							f.apply(stanza);
-
+		
 						boolean rejected = false;
-
+						
 						if (stanza.isMessage()) {
 							Message msg = (Message) stanza.getElement();
-
-							if (msg.getFrom() == null
-									&& s == connection.getClientChannel())
+		
+							if (msg.getFrom() == null && s == connection.getClientChannel())
 								msg.setFrom(connection.getClientJID());
-
-							rejected = ((msg.getFrom() != null && msg.getFrom()
-									.contains(connection.getClientJID())) || ((msg
-									.getTo() != null) && msg.getTo().contains(
-									connection.getClientJID())))
+	
+							rejected = (msg.getFrom().contains(connection.getClientJID()) || msg
+									.getTo().contains(connection.getClientJID()))
 									&& stanza.isrejected();
-
+						
 							if (rejected && connection.getClientChannel() == s)
 								connection.send(s, stanza);
 						}
-
+						
 						if (!rejected)
 							sendToOppositeChannel(connection, s, stanza);
-
+					
 					}
 					updateSelectionKeys(connection);
 					connection.getBuffer(s, BufferType.read).clear();
@@ -139,14 +129,14 @@ public class ClientHandler implements TCPHandler {
 				} catch (IncompleteElementsException e) {
 					connection.expandBuffer(s, BufferType.read);
 				}
-
+				
 			} else {
 				key.cancel();
 			}
-
+	
 			return serverChannel;
 		}
-
+		
 	}
 
 	public void write(SelectionKey key) throws IOException {
@@ -179,12 +169,13 @@ public class ClientHandler implements TCPHandler {
 		}
 	}
 
-	public void sendToOppositeChannel(ProxyConnection connection,
-			SocketChannel s, Stanza stanza) {
+	public void sendToOppositeChannel(ProxyConnection connection, SocketChannel s, Stanza stanza) {
 		if (s == connection.getClientChannel()) {
-			connection.send(connection.getServerChannel(), stanza);
+			connection.send(
+					connection.getServerChannel(), stanza);
 		} else {
-			connection.send(connection.getClientChannel(), stanza);
+			connection.send(
+					connection.getClientChannel(), stanza);
 		}
 	}
 
