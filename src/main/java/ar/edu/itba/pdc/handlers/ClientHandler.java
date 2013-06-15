@@ -67,7 +67,6 @@ public class ClientHandler implements TCPHandler {
 			if (!connection.connected()) {				
 				connection.handleConnectionStanza(s);
 				if (connection.readyToConnectToServer()) {					
-					/* Aca hay que hacer un get del server channel antes de conectarlo */
 					String username = connection.getClientUsername();
 					serverChannel = SocketChannel.open();
 					String serverToConnect = Multiplexing.getInstance().getUserServer(username);
@@ -85,7 +84,7 @@ public class ClientHandler implements TCPHandler {
 			}
 			updateSelectionKeys(connection);
 			return serverChannel;
-			/* Hasta aca */
+
 		} else {
 
 			/* Perform the read operation */
@@ -149,35 +148,25 @@ public class ClientHandler implements TCPHandler {
 
 	private void updateSelectionKeys(ProxyConnection connection)
 			throws ClosedChannelException {
-		if (connection.hasServer()) {
-			if (connection.hasInformationForChannel(connection
-					.getServerChannel())) {
-				connection.getServerChannel().register(selector,
-						SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-			} else {
-				connection.getServerChannel().register(selector,
-						SelectionKey.OP_READ);
-			}
-		}
-		if (connection.hasClient()) {
-			if (connection.hasInformationForChannel(connection
-					.getClientChannel())) {
-				connection.getClientChannel().register(selector,
-						SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-			} else {
-				connection.getClientChannel().register(selector,
-						SelectionKey.OP_READ);
-			}
-		}
+		if (connection.hasServer())
+			updateChannelKeys(connection, connection.getServerChannel());
+		if (connection.hasClient())
+			updateChannelKeys(connection, connection.getClientChannel());
+	}
+	
+	private void updateChannelKeys(ProxyConnection connection, SocketChannel channel) 
+			throws ClosedChannelException {
+		if (connection.hasInformationForChannel(channel)) 
+			channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+		else
+			channel.register(selector, SelectionKey.OP_READ);
 	}
 
 	public void sendToOppositeChannel(ProxyConnection connection, SocketChannel s, Stanza stanza) {
 		if (s == connection.getClientChannel()) {
-			connection.send(
-					connection.getServerChannel(), stanza);
+			connection.send(connection.getServerChannel(), stanza);
 		} else {
-			connection.send(
-					connection.getClientChannel(), stanza);
+			connection.send(connection.getClientChannel(), stanza);
 		}
 	}
 
