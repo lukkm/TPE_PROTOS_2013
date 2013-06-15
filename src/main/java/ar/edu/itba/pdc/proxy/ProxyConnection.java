@@ -128,6 +128,10 @@ public class ProxyConnection {
 			System.out.println("Leido del server: " + message);
 		
 		if (bytesRead == -1) {
+			System.out.println("Estamos en la B");
+			client.close();
+			server.close();
+			return -1;
 			/* EOF - Hay que cerrar el canal */
 		} else if (bytesRead > 0) {
 			/* Aca vemos q hacemos */
@@ -250,7 +254,7 @@ public class ProxyConnection {
 	
 	public void writeFirstStreamToServer() {
 		if (serverName != null) {
-			String stream = INITIAL_STREAM + "to='" + serverName + "'>";
+			String stream = INITIAL_STREAM + "to='" + serverName + "' xml:lang=\"en\" xmlns:xml=\"http://www.w3.org/XML/1998/namespace\">";
 			sendMessage(server, stream.getBytes());
 			System.out.println("MESSAGE: " + stream);
 			this.state = ConnectionState.connectingToServer;

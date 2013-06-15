@@ -90,44 +90,50 @@ public class ClientHandler implements TCPHandler {
 			/* Perform the read operation */
 			int bytes = connection.readFrom(s);
 	
-			/* Parse what was just read */
-			List<Stanza> stanzaList = null;
-			
-			try {
-				stanzaList = parser.parse(connection.getBuffer(s, BufferType.read));
-				for (Stanza stanza : stanzaList) {
-					for (Filter f : filterList)
-						f.apply(stanza);
-	
-					boolean rejected = false;
-					
-					if (stanza.isMessage()) {
-						Message msg = (Message) stanza.getElement();
-	
-						if (msg.getFrom() == null && s == connection.getClientChannel())
-							msg.setFrom(connection.getClientJID());
-
-						rejected = (msg.getFrom().contains(connection.getClientJID()) || msg
-								.getTo().contains(connection.getClientJID()))
-								&& stanza.isrejected();
-					
-						if (rejected)
-							connection.sendMessage(s, stanza);
-						else 
-							System.out.println("Send message: " + msg.getMessage());
-					}
-					
-					if (!rejected)
-						sendToOppositeChannel(connection, s, stanza);
+			if (bytes != -1) {
 				
+				/* Parse what was just read */
+				List<Stanza> stanzaList = null;
+				
+				try {
+					stanzaList = parser.parse(connection.getBuffer(s, BufferType.read));
+					for (Stanza stanza : stanzaList) {
+						for (Filter f : filterList)
+							f.apply(stanza);
+		
+						boolean rejected = false;
+						
+						if (stanza.isMessage()) {
+							Message msg = (Message) stanza.getElement();
+		
+							if (msg.getFrom() == null && s == connection.getClientChannel())
+								msg.setFrom(connection.getClientJID());
+	
+							rejected = (msg.getFrom().contains(connection.getClientJID()) || msg
+									.getTo().contains(connection.getClientJID()))
+									&& stanza.isrejected();
+						
+							if (rejected)
+								connection.sendMessage(s, stanza);
+							else 
+								System.out.println("Send message: " + msg.getMessage());
+						}
+						
+						if (!rejected)
+							sendToOppositeChannel(connection, s, stanza);
+					
+					}
+					updateSelectionKeys(connection);
+					connection.getBuffer(s, BufferType.read).clear();
+					return null;
+				} catch (ParserConfigurationException e) {
+					e.printStackTrace();
+				} catch (IncompleteElementsException e) {
+					connection.expandBuffer(s, BufferType.read);
 				}
-				updateSelectionKeys(connection);
-				connection.getBuffer(s, BufferType.read).clear();
-				return null;
-			} catch (ParserConfigurationException e) {
-				e.printStackTrace();
-			} catch (IncompleteElementsException e) {
-				connection.expandBuffer(s, BufferType.read);
+				
+			} else {
+				key.cancel();
 			}
 //			if (stanzaList != null) {
 //				for (Stanza stanza : stanzaList) {
