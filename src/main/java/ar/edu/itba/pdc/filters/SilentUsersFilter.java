@@ -44,11 +44,12 @@ public class SilentUsersFilter implements Filter {
 			Message msg = ((Message) stanza.getElement());
 			String from = msg.getFrom();
 			String to = msg.getTo();
-			if ((from != null && isSilent(from))
-					|| (to != null && isSilent(to))) {
+			if ((from != null && isSilent(from))) {
 				msg.setTo(from);
 				msg.setFrom("admin@xmpp-proxy");
 				msg.setMessage("You have been silenced!");
+				stanza.reject();
+			} else if ((to != null && isSilent(to))) {
 				stanza.reject();
 			}
 		}
