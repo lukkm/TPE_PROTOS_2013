@@ -98,6 +98,10 @@ public class ClientHandler implements TCPHandler {
 				try {
 					stanzaList = parser.parse(connection.getBuffer(s, BufferType.read));
 					for (Stanza stanza : stanzaList) {
+						if (stanza.getElement() != null && connection.connected())
+							if (stanza.getElement().getFrom() == null && s == connection.getClientChannel())
+									stanza.getElement().setFrom(connection.getClientJID());
+						
 						for (Filter f : filterList)
 							f.apply(stanza);
 		
@@ -106,9 +110,6 @@ public class ClientHandler implements TCPHandler {
 						if (stanza.isMessage()) {
 							Message msg = (Message) stanza.getElement();
 		
-							if (msg.getFrom() == null && s == connection.getClientChannel())
-								msg.setFrom(connection.getClientJID());
-	
 							rejected = (msg.getFrom().contains(connection.getClientJID()) || msg
 									.getTo().contains(connection.getClientJID()))
 									&& stanza.isrejected();
