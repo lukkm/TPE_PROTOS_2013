@@ -10,6 +10,13 @@ import ar.edu.itba.pdc.utils.ConfigurationCommands;
 public class TransformationFilter implements Filter{
 	
 	private Map<Character,String> changes;
+	private static TransformationFilter instance = null;
+	
+	public static TransformationFilter getInstance() {
+		if (instance == null)
+			instance = new TransformationFilter();
+		return instance;
+	}
 	
 	public TransformationFilter() {
 		changes = new HashMap<Character,String>();

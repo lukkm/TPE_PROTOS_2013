@@ -18,12 +18,19 @@ public class StatisticsFilter implements Filter{
 	private static final int TRANSFER_UNIT = 1024;
 	private static final int ACCESS_UNIT = 1;
 	private static int interval = DEFAULT_INTERVAL;
+	private static StatisticsFilter instance = null;
 	
 	private boolean statisticsEnabled = false;
 	private long initialStatisticsTime = -1;
 	
 	private Map<String, PersonalStatistic> usersStatistics = null;
 
+	public static StatisticsFilter getInstance() {
+		if (instance == null)
+			instance = new StatisticsFilter();
+		return instance;
+	}
+	
 	public StatisticsFilter() {
 		if (usersStatistics == null) {
 			usersStatistics = new HashMap<String, PersonalStatistic>();

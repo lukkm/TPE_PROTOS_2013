@@ -10,7 +10,14 @@ import ar.edu.itba.pdc.utils.ConfigurationCommands;
 public class SilentUsersFilter implements Filter {
 
 	private Set<String> mapOfSilence = null;
-
+	private static SilentUsersFilter instance = null;
+	
+	public static SilentUsersFilter getInstance() {
+		if (instance == null)
+			instance = new SilentUsersFilter();
+		return instance;
+	}
+	
 	public SilentUsersFilter() {
 		mapOfSilence = new HashSet<String>();
 		String silent = ConfigurationCommands.getInstance().getProperty(
