@@ -157,6 +157,7 @@ public class ProxyConnection {
 	}
 	
 	public void appendToBuffer(SocketChannel s, BufferType buffer, byte[] bytes) {
+		System.out.println("appendToBuffeeeeeeeeeer:" + new String(bytes));
 		ChannelBuffers buffers = buffersMap.get(s);
 		buffers.writeToBuffer(buffer, bytes);
 	}
@@ -167,11 +168,13 @@ public class ProxyConnection {
 	}
 	
 	private void sendMessage(SocketChannel s, byte[] bytes) {
+		System.out.println("SENDMESSAGE PRIVADO:" + new String(bytes));
 		appendToBuffer(s, BufferType.write, bytes);
 		buffersMap.get(s).clearBuffer(BufferType.read);
 	}
 	
 	public void send(SocketChannel s, Stanza stanza) {
+		System.out.println("SEND NOMAS:" + new String(stanza.getXMLString().getBytes()));
 		sendMessage(s, stanza.getXMLString().getBytes());
 	}
 	

@@ -122,13 +122,13 @@ public class ClientHandler implements TCPHandler {
 				
 				}
 				updateSelectionKeys(connection);
+				connection.getBuffer(s, BufferType.read).clear();
 				return null;
 			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
 			} catch (IncompleteElementsException e) {
 				connection.expandBuffer(s, BufferType.read);
 			}
-	
 //			if (stanzaList != null) {
 //				for (Stanza stanza : stanzaList) {
 //					if (stanza.isMessage()) {

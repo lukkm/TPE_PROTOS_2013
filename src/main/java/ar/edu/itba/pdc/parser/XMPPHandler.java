@@ -90,7 +90,7 @@ public class XMPPHandler extends DefaultHandler {
 					((Message)currentStanza.getElement()).setActive(str);
 				break;
 		}
-		if (indentCount > 0) 
+		if (indentCount > 0 && currentXMLElement != null) 
 			currentXMLElement.append(str);
 	}
 	

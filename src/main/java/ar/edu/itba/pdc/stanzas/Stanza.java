@@ -31,6 +31,8 @@ public class Stanza {
 	}
 	
 	public String getXMLString() {
+		if (isMessage())
+			return ((Message)element).getXMLMessage();
 		return xmlString;
 	}
 	
