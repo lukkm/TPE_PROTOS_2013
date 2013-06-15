@@ -42,9 +42,9 @@ public class ClientHandler implements TCPHandler {
 	}
 
 	private void initialize() {
-		filterList.add(new SilentUsersFilter());
-		filterList.add(new StatisticsFilter());
-		filterList.add(new TransformationFilter());
+		filterList.add(SilentUsersFilter.getInstance());
+		filterList.add(StatisticsFilter.getInstance());
+		filterList.add(TransformationFilter.getInstance());
 	}
 
 	/*
