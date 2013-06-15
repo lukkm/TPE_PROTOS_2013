@@ -6,11 +6,13 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
+import ar.edu.itba.pdc.logger.XMPPLogger;
+
 
 public class ProxyConnection {
 
 	private static final int BUFFER_SIZE = 4096;
-	
+	private XMPPLogger logger = XMPPLogger.getInstance();
 	private SocketChannel server = null;
 	private SocketChannel client = null;
 	
@@ -26,6 +28,7 @@ public class ProxyConnection {
 	}
 	
 	public ProxyConnection(SocketChannel client) {
+		logger.info("Connected Client");
 		this.client = client;
 		buffersMap.put(client, new ChannelBuffers(ByteBuffer.allocate(BUFFER_SIZE), ByteBuffer.allocate(BUFFER_SIZE)));
 	}
@@ -145,6 +148,7 @@ public class ProxyConnection {
 	}
 
 	public void setClientJID(String clientJID) {
+		logger.info("Client ID: " + clientJID);
 		this.clientJID = clientJID;
 	}
 }
