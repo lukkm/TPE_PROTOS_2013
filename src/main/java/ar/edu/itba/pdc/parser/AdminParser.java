@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import ar.edu.itba.pdc.filters.StatisticsFilter;
+import ar.edu.itba.pdc.logger.XMPPLogger;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class AdminParser {
@@ -41,18 +42,19 @@ public class AdminParser {
 				if (string.equals(cmd)) {
 					boolean accepted;
 					switch (commands.get(string)) {
-						case booleanCommand:
-							accepted = executeBooleanCommand(jsonObject, cmd);
-							break;
-						case listCommand:
-							accepted = executeListCommand(jsonObject, cmd);
-							break;
-						case getCommand:
-							/*Asignar a respuesta*/ executeGetCommand(jsonObject, cmd);
-							accepted = true;
-							break;
-						default:
-							accepted = false;
+					case booleanCommand:
+						accepted = executeBooleanCommand(jsonObject, cmd);
+						break;
+					case listCommand:
+						accepted = executeListCommand(jsonObject, cmd);
+						break;
+					case getCommand:
+						/* Asignar a respuesta */executeGetCommand(jsonObject,
+								cmd);
+						accepted = true;
+						break;
+					default:
+						accepted = false;
 					}
 					if (accepted)
 						commandManager.saveFile();
@@ -64,7 +66,7 @@ public class AdminParser {
 		}
 		return true;
 	}
-	
+
 	private boolean executeListCommand(JSONObject jsonObject, String cmd) {
 		String oldValue = "";
 		if (commandManager.hasProperty(cmd))
@@ -80,22 +82,22 @@ public class AdminParser {
 		}
 
 		if (oldValue != null && !oldValue.equals(""))
-			commandManager.setProperty(cmd, oldValue + ";"
-					+ newValue);
+			commandManager.setProperty(cmd, oldValue + ";" + newValue);
 		else
 			commandManager.setProperty(cmd, newValue);
 		return true;
 	}
-	
-	private boolean executeBooleanCommand(JSONObject jsonObject, String cmd) throws JSONException {
+
+	private boolean executeBooleanCommand(JSONObject jsonObject, String cmd)
+			throws JSONException {
 		String value = jsonObject.get(cmd).toString().toLowerCase();
 		if (!value.equals("enabled") && !value.equals("disabled"))
 			return false;
 		commandManager.setProperty(cmd, value);
 		return true;
 	}
-	
+
 	private void executeGetCommand(JSONObject jsonObject, String cmd) {
-		/* Ver como hacer el get*/
+		/* Ver como hacer el get */
 	}
 }
