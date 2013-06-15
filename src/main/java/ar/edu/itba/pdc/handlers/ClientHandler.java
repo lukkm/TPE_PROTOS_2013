@@ -17,6 +17,7 @@ import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
 import ar.edu.itba.pdc.filters.Filter;
 import ar.edu.itba.pdc.filters.Multiplexing;
 import ar.edu.itba.pdc.filters.SilentUsersFilter;
+import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.jabber.Message;
@@ -41,9 +42,9 @@ public class ClientHandler implements TCPHandler {
 	}
 
 	private void initialize() {
-//		filterList.add(new StatisticsFilter());
-		filterList.add(new TransformationFilter());
 		filterList.add(new SilentUsersFilter());
+		filterList.add(new StatisticsFilter());
+		filterList.add(new TransformationFilter());
 	}
 
 	/*

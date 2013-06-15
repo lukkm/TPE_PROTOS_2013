@@ -20,6 +20,7 @@ public class AdminHandler implements TCPHandler {
 	private Map<SocketChannel, ChannelBuffers> config;
 	private Selector selector;
 	private AdminParser parser;
+	
 
 	public AdminHandler(Selector selector) {
 		this.selector = selector;
