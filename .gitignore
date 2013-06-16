@@ -9,5 +9,5 @@
 /target
 
 # config files
-*.properties
+src/main/java/ar/edu/itba/pdc/resources/parsedcommands.properties
 logs.html

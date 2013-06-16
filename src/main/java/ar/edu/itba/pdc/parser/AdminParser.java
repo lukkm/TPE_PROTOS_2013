@@ -29,7 +29,7 @@ public class AdminParser {
 			if (aux.length > 1) {
 				commands.put(aux[0].trim(), aux[1].trim());
 			} else {
-				throw new BadSyntaxException();
+				commands.put(aux[0].trim(), "");
 			}
 		}
 		return takeActions(commands);

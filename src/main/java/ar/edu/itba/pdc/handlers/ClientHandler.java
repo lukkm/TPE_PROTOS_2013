@@ -42,9 +42,9 @@ public class ClientHandler implements TCPHandler {
 	}
 
 	private void initialize() {
-		filterList.add(new SilentUsersFilter());
-		filterList.add(new StatisticsFilter());
-		filterList.add(new TransformationFilter());
+		filterList.add(SilentUsersFilter.getInstance());
+		filterList.add(StatisticsFilter.getInstance());
+		filterList.add(TransformationFilter.getInstance());
 	}
 
 	/*
@@ -84,13 +84,12 @@ public class ClientHandler implements TCPHandler {
 			}
 			updateSelectionKeys(connection);
 			return serverChannel;
-
 		} else {
 
 			/* Perform the read operation */
 			int bytes = connection.readFrom(s);
 	
-			if (bytes != -1) {
+			if (bytes > 0) {
 				
 				/* Parse what was just read */
 				List<Stanza> stanzaList = null;
@@ -131,7 +130,7 @@ public class ClientHandler implements TCPHandler {
 					connection.expandBuffer(s, BufferType.read);
 				}
 				
-			} else {
+			} else if (bytes == -1) {
 				key.cancel();
 			}
 	

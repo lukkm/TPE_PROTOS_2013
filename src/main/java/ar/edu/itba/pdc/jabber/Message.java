@@ -3,7 +3,8 @@ package ar.edu.itba.pdc.jabber;
 public class Message extends JabberElement {
 	
 	private String message = null;
-	private String to, activeXmlns, active;
+	private String to, activeXmlns, active, type, errorType, errorXMLBody;
+	private int errorCode = 0;
 	
 	public Message(String message, String from, String to) {
 		this(from, to);
@@ -47,20 +48,70 @@ public class Message extends JabberElement {
 		this.to = to;
 	}
 	
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+	
+	public int getErrorCode() {
+		return errorCode;
+	}
+	
+	public void setErrorCode(int errorCode) {
+		this.errorCode = errorCode;
+	}
+
+	public String getErrorType() {
+		return errorType;
+	}
+	
+	public void setErrorType(String errorType) {
+		this.errorType = errorType;
+	}
+
+	public String getErrorXMLBody() {
+		return errorXMLBody;
+	}
+
+	public void setErrorXMLBody(String errorXML) {
+		this.errorXMLBody = errorXML;
+	}
+
 	public String getXMLMessage() {
-		String xmlMessage = "<message from='" 
+		StringBuffer xmlMessage = new StringBuffer();
+		xmlMessage.append("<message from='" 
 				+ getFrom() 
 				+ "' to='" 
-				+ getTo() + "' type='chat'>";
-		if (getActive() != null && !getActive().equals("")) {
-			xmlMessage = xmlMessage + "<active xmlns='" + getActiveXmlns() + "'>" + getActive() + "</active>";
-		}
-		xmlMessage = xmlMessage + ("<body>"
+				+ getTo() 
+				+ "' type='" 
+				+ ((getType() != null) ? getType() : "chat")
+				+ "'>");
+		
+		if (getActive() != null && !getActive().equals(""))
+			xmlMessage.append("<active xmlns='" + getActiveXmlns() + "'>" + getActive() + "</active>");
+		
+		xmlMessage.append("<body>"
 				+ getMessage()
-				+ "</body>"
-				+ "</message>");
-		return xmlMessage;
+				+ "</body>");
+		
+		if (errorCode != 0)
+			xmlMessage.append("<error code='" 
+					+ errorCode 
+					+ "' type='" 
+					+ errorType 
+					+ "'>"
+					+ errorXMLBody
+					+ "</error>");
+		
+		xmlMessage.append("</message>");
+		
+		return xmlMessage.toString();
 	}
+
+
 
 	
 }
