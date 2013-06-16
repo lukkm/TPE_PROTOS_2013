@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.parser;
+package ar.edu.itba.pdc.parser.executors;
 
 
 public interface CommandExecutor {

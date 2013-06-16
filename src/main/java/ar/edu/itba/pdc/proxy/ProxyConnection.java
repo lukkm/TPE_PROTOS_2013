@@ -19,6 +19,8 @@ import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.parser.XMPPParser;
+import ar.edu.itba.pdc.proxy.enumerations.BufferType;
+import ar.edu.itba.pdc.proxy.enumerations.ConnectionState;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class ProxyConnection {

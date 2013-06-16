@@ -13,7 +13,7 @@ import java.util.Map;
 
 import ar.edu.itba.pdc.handlers.AdminHandler;
 import ar.edu.itba.pdc.handlers.ClientHandler;
-import ar.edu.itba.pdc.interfaces.TCPHandler;
+import ar.edu.itba.pdc.handlers.TCPHandler;
 
 public class DispatcherHandler { 
     private static final int TIMEOUT = 3000; 

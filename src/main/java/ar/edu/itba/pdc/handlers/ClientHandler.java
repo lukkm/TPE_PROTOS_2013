@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ar.edu.itba.pdc.filters.Multiplexing;
-import ar.edu.itba.pdc.interfaces.TCPHandler;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 
 public class ClientHandler implements TCPHandler {
@@ -30,7 +29,7 @@ public class ClientHandler implements TCPHandler {
 	/**
 	 * Handles incoming connections to client port.
 	 * 
-	 * Creates a new ProxtConnection object which will contain all the
+	 * Creates a new ProxyConnection object which will contain all the
 	 * information about the connection between the client and it's respective
 	 * server.
 	 */
@@ -121,11 +120,11 @@ public class ClientHandler implements TCPHandler {
 	/**
 	 * Updates selector keys for a specific connection.
 	 * 
-	 * Always sets the OP_READ flag, in case any of the two endpoints (client,
-	 * server) wants write something to each other.
+	 * Always sets the OP_READ flag, in case any endpoint wants to write
+	 * something.
 	 * 
-	 * In case there's pending information in any of the write buffers for a
-	 * specific channel, sets the channel OP_WRITE flag.
+	 * In case there's pending information in the write buffer for a specific
+	 * channel, sets the channel OP_WRITE flag.
 	 * 
 	 * @param connection
 	 * @throws ClosedChannelException

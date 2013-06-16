@@ -10,6 +10,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import ar.edu.itba.pdc.jabber.JabberElement;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
+import ar.edu.itba.pdc.parser.enumerations.ParsingState;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPHandler extends DefaultHandler {

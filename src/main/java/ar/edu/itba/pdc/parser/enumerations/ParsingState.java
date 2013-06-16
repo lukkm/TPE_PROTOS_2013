@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.parser;
+package ar.edu.itba.pdc.parser.enumerations;
 
 public enum ParsingState {
 	noState,
