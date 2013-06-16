@@ -27,10 +27,12 @@ public class Multiplexing{
 	
 	/* Para cambios desde consola */
 	public void updateMultiplexedUsers (String rawUsers) {
-		for (String s : rawUsers.split(";")) {
-			String[] jid = s.split("@");
-			String[] domain = jid[1].split("/");
-			usersOwnServers.put(jid[0], domain[0]);
+		if (rawUsers != null && !rawUsers.equals("")) {
+			for (String s : rawUsers.split(";")) {
+				String[] jid = s.split("@");
+				String[] domain = jid[1].split("/");
+				usersOwnServers.put(jid[0], domain[0]);
+			}
 		}
 	}
 	
