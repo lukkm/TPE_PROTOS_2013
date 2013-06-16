@@ -20,7 +20,6 @@ public class AdminHandler implements TCPHandler {
 	private Map<SocketChannel, ChannelBuffers> config;
 	private Selector selector;
 	private AdminParser parser;
-	
 
 	public AdminHandler(Selector selector) {
 		this.selector = selector;
@@ -38,19 +37,22 @@ public class AdminHandler implements TCPHandler {
 		int bytesRead = s.read(channelBuffers.getBuffer(BufferType.read));
 
 		try {
-			if (!parser.parseCommand(channelBuffers.getBuffer(BufferType.read), bytesRead))
-				System.out.println("Mala sintaxis");
+			String response;
+			if ((response = parser.parseCommand(
+					channelBuffers.getBuffer(BufferType.read), bytesRead)) != null)
+				s.write(ByteBuffer.wrap(response.getBytes()));
 		} catch (BadSyntaxException e) {
 			System.out.println("Bad syntax");
-		}
-		// parseCommand(channelBuffers.getReadBuffer());
-		// channelBuffers.autoSynchronizeBuffers();
-		// String strCommand = new
-		// String(channelBuffers.getReadBuffer().array());
-
-		channelBuffers.getBuffer(BufferType.read).clear();
-		updateSelectionKeys(s);
-		return null;
+			s.write(ByteBuffer.wrap("BAD SYNTAX\n".getBytes()));
+		} catch (Exception e) {
+			System.out.println("Probably lost connection with the admin"); //TODO agregar al logger
+			s.close();
+			key.cancel();
+			return null;
+		} 
+			channelBuffers.getBuffer(BufferType.read).clear();
+			updateSelectionKeys(s);
+			return null;
 	}
 
 	public void write(SelectionKey key) throws IOException {
@@ -65,8 +67,8 @@ public class AdminHandler implements TCPHandler {
 	private void updateSelectionKeys(SocketChannel s)
 			throws ClosedChannelException {
 		ChannelBuffers buffers = config.get(s);
-		if (buffers.getBuffer(BufferType.write).capacity() != buffers.getBuffer(BufferType.write)
-				.remaining()) {
+		if (buffers.getBuffer(BufferType.write).capacity() != buffers
+				.getBuffer(BufferType.write).remaining()) {
 			s.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		} else {
 			s.register(selector, SelectionKey.OP_READ);

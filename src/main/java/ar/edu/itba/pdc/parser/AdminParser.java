@@ -1,5 +1,6 @@
 package ar.edu.itba.pdc.parser;
 
+import java.net.ResponseCache;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,43 +18,53 @@ public class AdminParser {
 		commandTypes.put("statistics", BooleanCommandExecutor.getInstance());
 		commandTypes.put("monitor", BooleanCommandExecutor.getInstance());
 		commandTypes.put("getStatistics", GetCommandExecutor.getInstance());
-		commandTypes.put("transformation", BooleanCommandExecutor.getInstance());
+		commandTypes
+				.put("transformation", BooleanCommandExecutor.getInstance());
 		commandTypes.put("interval", BooleanCommandExecutor.getInstance());
 	}
 
-	public boolean parseCommand(ByteBuffer readBuffer, int bytesRead) throws BadSyntaxException {
-		
-		String fullCommand = new String(readBuffer.array()).substring(0, bytesRead);
+	public String parseCommand(ByteBuffer readBuffer, int bytesRead)
+			throws BadSyntaxException {
+
+		String fullCommand = new String(readBuffer.array()).substring(0,
+				bytesRead);
 		Map<String, String> commands = new HashMap<String, String>();
 		for (String s : fullCommand.split(";")) {
-		
-			String[] aux = s.split("=");
-			if (aux.length > 1) {
-				commands.put(aux[0].trim(), aux[1].trim());
-			} else {
-				commands.put(aux[0].trim(), "");
-			}
-		}
-		return takeActions(commands);
-	}	
 
-	private boolean takeActions(Map<String, String> commands) throws BadSyntaxException {
-		
-		if (commands.isEmpty()) {
-			throw new BadSyntaxException();
-		}
-		for (String cmd : commands.keySet()) {
-			System.out.println("El comando es " + cmd);
-			String responseToAdmin = commandTypes.get(cmd).execute(cmd, commands.get(cmd));
-			System.out.println(responseToAdmin);
-			
-			if (responseToAdmin != null) {
-				commandManager.saveFile();
-				//TODO send to admin in the socket
-			}
+			String[] aux = s.split("=");
+			String trimmed =  aux[0].trim();
+			if (commandTypes.containsKey(trimmed)) {
+				if (aux.length > 1) {
+					commands.put(trimmed, aux[1].trim());
+				} else {
+					commands.put(trimmed, "");
+				}
+			} else if (trimmed.isEmpty())
+				return null;
 			else
 				throw new BadSyntaxException();
 		}
-		return true;
+
+		return takeActions(commands);
+	}
+
+	private String takeActions(Map<String, String> commands)
+			throws BadSyntaxException {
+
+//		if (commands.isEmpty()) {
+//			throw new BadSyntaxException();
+//		}
+		String responseToAdmin = null;
+		for (String cmd : commands.keySet()) {
+			responseToAdmin = commandTypes.get(cmd).execute(cmd,
+					commands.get(cmd));
+
+			if (responseToAdmin != null) {
+				commandManager.saveFile();
+			} else {
+				throw new BadSyntaxException();
+			}
+		}
+		return responseToAdmin;
 	}
 }
