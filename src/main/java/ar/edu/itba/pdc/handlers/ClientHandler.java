@@ -84,7 +84,6 @@ public class ClientHandler implements TCPHandler {
 			}
 			updateSelectionKeys(connection);
 			return serverChannel;
-
 		} else {
 
 			/* Perform the read operation */
