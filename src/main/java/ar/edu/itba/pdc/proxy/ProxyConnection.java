@@ -4,10 +4,21 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.codec.binary.Base64;
 
+import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
+import ar.edu.itba.pdc.filters.Filter;
+import ar.edu.itba.pdc.filters.SilentUsersFilter;
+import ar.edu.itba.pdc.filters.StatisticsFilter;
+import ar.edu.itba.pdc.filters.TransformationFilter;
+import ar.edu.itba.pdc.jabber.Message;
+import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 
@@ -33,7 +44,10 @@ public class ProxyConnection {
 	
     private ConnectionState state;
     
-	/* Every socket channel has its own read and write buffers */
+    private List<Filter> filterList;
+	private XMPPParser parser;
+    
+    /* Every socket channel has its own read and write buffers */
     private Map<SocketChannel, ChannelBuffers> buffersMap = new HashMap<SocketChannel, ChannelBuffers>();
 	
 	public ProxyConnection(SocketChannel server, SocketChannel client) {
@@ -45,6 +59,16 @@ public class ProxyConnection {
 		this.client = client;
 		this.state = ConnectionState.noState;
 		buffersMap.put(client, new ChannelBuffers());
+	
+		this.parser = new XMPPParser();
+		this.filterList = new LinkedList<Filter>();
+		initialize();
+	}
+	
+	private void initialize() {
+		filterList.add(SilentUsersFilter.getInstance());
+		filterList.add(StatisticsFilter.getInstance());
+		filterList.add(TransformationFilter.getInstance());
 	}
 	
 	public void setServer(SocketChannel server) {
@@ -106,9 +130,9 @@ public class ProxyConnection {
 		return bytesWrote;
 	}
 	
-	public int readFrom(SocketChannel s) throws IOException {
+	private int read(SocketChannel s) throws IOException {
 		int bytesRead = s.read(buffersMap.get(s).getBuffer(BufferType.read));
-		
+
 		if (bytesRead == -1) {
 			client.close();
 			server.close();
@@ -118,6 +142,55 @@ public class ProxyConnection {
 				System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
 			else
 				System.out.println("Leido del server: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
+		}
+
+		return bytesRead;
+	}
+	
+	public int readFrom(SocketChannel s) throws IOException {
+		int bytesRead = read(s);
+		if (bytesRead > 0) {
+			if (s == client) 
+				System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
+			else
+				System.out.println("Leido del server: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
+			/* Parse what was just read */
+			List<Stanza> stanzaList = null;
+			
+			try {
+				stanzaList = parser.parse(getBuffer(s, BufferType.read));
+				for (Stanza stanza : stanzaList) {
+					if (stanza.getElement() != null && connected())
+						if (stanza.getElement().getFrom() == null && s == client)
+								stanza.getElement().setFrom(getClientJID());
+					
+					for (Filter f : filterList)
+						f.apply(stanza);
+	
+					boolean rejected = false;
+					
+					if (stanza.isMessage()) {
+						Message msg = (Message) stanza.getElement();
+	
+						rejected = (msg.getFrom().contains(getClientJID()) || msg
+								.getTo().contains(getClientJID()))
+								&& stanza.isrejected();
+					
+						if (rejected && client == s)
+							send(s, stanza);
+					}
+					
+					if (!rejected)
+						sendToOppositeChannel(s, stanza);
+				
+				}
+				getBuffer(s, BufferType.read).clear();
+				return bytesRead;
+			} catch (ParserConfigurationException e) {
+				e.printStackTrace();
+			} catch (IncompleteElementsException e) {
+				expandBuffer(s, BufferType.read);
+			}
 		}
 		
 		return bytesRead;
@@ -150,7 +223,7 @@ public class ProxyConnection {
 	}
 	
 	public void handleConnectionStanza(SocketChannel s) throws IOException {
-		int length = readFrom(s);
+		int length = read(s);
 		String read = new String(getBuffer(s, BufferType.read).array()).substring(0, length);
 		System.out.println(read);
 		switch (state) {
@@ -214,5 +287,12 @@ public class ProxyConnection {
 			sendMessage(server, stream.getBytes());
 			this.state = ConnectionState.connectingToServer;
 		}
+	}
+	
+	public void sendToOppositeChannel(SocketChannel s, Stanza stanza) {
+		if (s == client) 
+			send(server, stanza);
+		else 
+			send(client, stanza);
 	}
 }
