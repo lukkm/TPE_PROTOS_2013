@@ -17,14 +17,14 @@ public class ListCommandExecutor implements CommandExecutor{
 		commandManager = ConfigurationCommands.getInstance();
 	}
 	
-	public boolean execute(String command, String value) {	
+	public String execute(String command, String value) {	
 		String oldValue = "";
 		if (commandManager.hasProperty(command))
 			oldValue = commandManager.getProperty(command);
 		String newValue = value;
 		
 		if (oldValue != null && oldValue.contains(newValue)) {
-			return false;
+			return null;
 		}
 
 		if (oldValue != null && !oldValue.equals(""))
@@ -32,7 +32,7 @@ public class ListCommandExecutor implements CommandExecutor{
 					+ newValue);
 		else
 			commandManager.setProperty(command, newValue);
-		return true;
+		return "OK";
 	}
 
 }

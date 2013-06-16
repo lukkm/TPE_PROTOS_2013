@@ -18,11 +18,11 @@ public class BooleanCommandExecutor implements CommandExecutor{
 		commandManager = ConfigurationCommands.getInstance();
 	}
 	
-	public boolean execute(String command, String value) {
+	public String execute(String command, String value) {
 		String valueLower = value.toLowerCase();
 		if (!valueLower.equals("enabled") && !valueLower.equals("disabled"))
-			return false;
+			return null;
 		commandManager.setProperty(command, value);
-		return true;
+		return "OK";
 	}
 }

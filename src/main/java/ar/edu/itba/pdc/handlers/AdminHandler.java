@@ -42,8 +42,6 @@ public class AdminHandler implements TCPHandler {
 				System.out.println("Mala sintaxis");
 		} catch (BadSyntaxException e) {
 			System.out.println("Bad syntax");
-		} catch (Exception e) {
-			System.out.println("Careta fixea");
 		}
 		// parseCommand(channelBuffers.getReadBuffer());
 		// channelBuffers.autoSynchronizeBuffers();
