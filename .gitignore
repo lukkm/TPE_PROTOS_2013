@@ -8,6 +8,6 @@
 /bin
 /target
 
-# config files
-src/main/java/ar/edu/itba/pdc/resources/parsedcommands.properties
+# config files #
+src/main/java/ar/edu/itba/pdc/resources/*
 logs.html
