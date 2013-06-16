@@ -35,6 +35,9 @@ public class XMPPHandler extends DefaultHandler {
 			/* Element name parsing */
 			if (elementName.equals("message")) {
 				currentStanza.setElement(JabberElement.createMessage(attributes.getValue("from"), attributes.getValue("to")));
+				if (attributes.getValue("type") != null) {
+					((Message)currentStanza.getElement()).setType(attributes.getValue("type"));
+				}
 			} else if (elementName.equals("presence")) {
 				currentStanza.setElement(JabberElement.createPresence(attributes.getValue("from"), attributes.getValue("to")));
 				((Presence)currentStanza.getElement()).setType(attributes.getValue("type"));
