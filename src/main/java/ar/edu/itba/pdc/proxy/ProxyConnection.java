@@ -117,7 +117,7 @@ public class ProxyConnection {
 		return server != null && state == ConnectionState.connected;
 	}
 	
-	public int writeTo(SocketChannel s) throws IOException {
+	public synchronized int writeTo(SocketChannel s) throws IOException {
 		int bytesWrote = 0;
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
@@ -137,18 +137,30 @@ public class ProxyConnection {
 			client.close();
 			server.close();
 			return -1;
-		} else {
-			if (s == client) 
-				System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
-			else
-				System.out.println("Leido del server: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
 		}
 
 		return bytesRead;
 	}
 	
+	
 	public int readFrom(SocketChannel s) throws IOException {
 		int bytesRead = read(s);
+		
+		verGasOverGotas(bytesRead, s);
+		
+		return bytesRead;
+	}
+	
+	public String getClientJID() {
+		return clientJID;
+	}
+	
+	public void appendToBuffer(SocketChannel s, BufferType buffer, byte[] bytes) {
+		ChannelBuffers buffers = buffersMap.get(s);
+		buffers.writeToBuffer(buffer, bytes);
+	}
+	
+	private synchronized void verGasOverGotas(int bytesRead, SocketChannel s) throws IOException {
 		if (bytesRead > 0) {
 			if (s == client) 
 				System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
@@ -185,24 +197,12 @@ public class ProxyConnection {
 				
 				}
 				getBuffer(s, BufferType.read).clear();
-				return bytesRead;
 			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
 			} catch (IncompleteElementsException e) {
 				expandBuffer(s, BufferType.read);
 			}
 		}
-		
-		return bytesRead;
-	}
-	
-	public String getClientJID() {
-		return clientJID;
-	}
-	
-	public void appendToBuffer(SocketChannel s, BufferType buffer, byte[] bytes) {
-		ChannelBuffers buffers = buffersMap.get(s);
-		buffers.writeToBuffer(buffer, bytes);
 	}
 	
 	private void sendMessage(SocketChannel s, byte[] bytes) {

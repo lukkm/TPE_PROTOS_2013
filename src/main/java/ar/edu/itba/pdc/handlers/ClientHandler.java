@@ -8,6 +8,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import ar.edu.itba.pdc.filters.Multiplexing;
 import ar.edu.itba.pdc.interfaces.TCPHandler;
@@ -17,11 +19,12 @@ public class ClientHandler implements TCPHandler {
 
 	private Map<SocketChannel, ProxyConnection> connections;
 	private Selector selector;
-	
+	private ExecutorService threadPool;
 
 	public ClientHandler(Selector selector) {
 		this.selector = selector;
 		this.connections = new HashMap<SocketChannel, ProxyConnection>();
+		this.threadPool = Executors.newFixedThreadPool(10);
 	}
 
 	/*
@@ -32,10 +35,10 @@ public class ClientHandler implements TCPHandler {
 		connections.put(channel, new ProxyConnection(channel));
 	}
 
-	public SocketChannel read(SelectionKey key) throws IOException {
+	public SocketChannel read(final SelectionKey key) throws IOException {
 
-		SocketChannel s = (SocketChannel) key.channel();
-		ProxyConnection connection = connections.get(s);
+		final SocketChannel s = (SocketChannel) key.channel();
+		final ProxyConnection connection = connections.get(s);
 
 		SocketChannel serverChannel = null;
 
@@ -61,25 +64,45 @@ public class ClientHandler implements TCPHandler {
 			updateSelectionKeys(connection);
 		} else {
 
-			/* Perform the read operation */
-			int bytes = connection.readFrom(s);
-	
-			if (bytes > 0) {
-				updateSelectionKeys(connection);
-			} else if (bytes == -1) {
-				key.cancel();
-			}
+			Runnable command = new Runnable() {
+				public void run() {
+					/* Perform the read operation */
+					int bytes;
+					try {
+						bytes = connection.readFrom(s);
+						if (bytes > 0) {
+							updateSelectionKeys(connection);
+						} else if (bytes == -1) {
+							key.cancel();
+						}
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			};
 			
+			threadPool.execute(command);
 		}
 
 		return serverChannel;
 		
 	}
 
-	public void write(SelectionKey key) throws IOException {
-		ProxyConnection connection = connections.get(key.channel());
-		connection.writeTo((SocketChannel) key.channel());
-		updateSelectionKeys(connection);
+	public void write(final SelectionKey key) throws IOException {
+		Runnable command = new Runnable() {
+		
+		public void run() {
+			ProxyConnection connection = connections.get(key.channel());
+			try {
+				connection.writeTo((SocketChannel) key.channel());
+				updateSelectionKeys(connection);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}};
+		
+		threadPool.execute(command);
 	}
 
 	private void updateSelectionKeys(ProxyConnection connection)
@@ -96,6 +119,7 @@ public class ClientHandler implements TCPHandler {
 			channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		else
 			channel.register(selector, SelectionKey.OP_READ);
+		selector.wakeup();
 	}
 
 }
