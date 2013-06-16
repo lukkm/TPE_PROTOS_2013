@@ -146,7 +146,7 @@ public class ProxyConnection {
 	public int readFrom(SocketChannel s) throws IOException {
 		int bytesRead = read(s);
 		
-		read(bytesRead, s);
+		process(bytesRead, s);
 		
 		return bytesRead;
 	}
@@ -160,7 +160,7 @@ public class ProxyConnection {
 		buffers.writeToBuffer(buffer, bytes);
 	}
 	
-	private synchronized void read(int bytesRead, SocketChannel s) throws IOException {
+	private synchronized void process(int bytesRead, SocketChannel s) throws IOException {
 		if (bytesRead > 0) {
 			if (s == client) 
 				System.out.println("Leido del cliente: " + new String(buffersMap.get(s).getBuffer(BufferType.read).array()).substring(0, buffersMap.get(s).getBuffer(BufferType.read).position()));
