@@ -17,7 +17,6 @@ public class ClientHandler implements TCPHandler {
 
 	private Map<SocketChannel, ProxyConnection> connections;
 	private Selector selector;
-	
 
 	public ClientHandler(Selector selector) {
 		this.selector = selector;
@@ -28,9 +27,33 @@ public class ClientHandler implements TCPHandler {
 	 * Ver ConcurrentHashMap para ver que socket fue con cada thread
 	 */
 
+	/**
+	 * Handles incoming connections to client port.
+	 * 
+	 * Creates a new ProxtConnection object which will contain all the
+	 * information about the connection between the client and it's respective
+	 * server.
+	 */
+
 	public void accept(SocketChannel channel) throws IOException {
 		connections.put(channel, new ProxyConnection(channel));
 	}
+
+	/**
+	 * Handles incoming reads from clients and servers.
+	 * 
+	 * The first one to connect here will be the client trying to connect a
+	 * specific server.
+	 * 
+	 * If not yet connected to server, writes default streams to client in order
+	 * to obtain its username. <blockquote>
+	 * connection.handleConnectionStanza(s); </blockquote>
+	 * 
+	 * Once obtained, opens a new socket to connect to the server, adds it to
+	 * the related ProxyConnection object and starts working as a proper proxy
+	 * filtering and modifying the messages that pass by.
+	 * 
+	 */
 
 	public SocketChannel read(SelectionKey key) throws IOException {
 
@@ -40,47 +63,73 @@ public class ClientHandler implements TCPHandler {
 		SocketChannel serverChannel = null;
 
 		if (!connection.hasConnectedServer()) {
-			if (!connection.connected()) {				
+			if (!connection.connected()) {
 				connection.handleConnectionStanza(s);
-				if (connection.readyToConnectToServer()) {					
+				if (connection.readyToConnectToServer()) {
 					String username = connection.getClientUsername();
 					serverChannel = SocketChannel.open();
-					String serverToConnect = Multiplexing.getInstance().getUserServer(username);
-					System.out.println("---------------------------------------------------------------------");
+					String serverToConnect = Multiplexing.getInstance()
+							.getUserServer(username);
+					System.out
+							.println("---------------------------------------------------------------------");
 					System.out.println("Connecting to: " + serverToConnect);
-					System.out.println("---------------------------------------------------------------------");
-					serverChannel.connect(new InetSocketAddress(serverToConnect, 5222));
+					System.out
+							.println("---------------------------------------------------------------------");
+					serverChannel.connect(new InetSocketAddress(
+							serverToConnect, 5222));
 					connection.setServerName("jabber.org");
 					serverChannel.configureBlocking(false);
 					serverChannel.register(selector, SelectionKey.OP_READ);
 					connection.setServer(serverChannel);
 					connection.writeFirstStreamToServer();
 					connections.put(serverChannel, connection);
-				} 
+				}
 			}
 			updateSelectionKeys(connection);
 		} else {
 
 			/* Perform the read operation */
 			int bytes = connection.readFrom(s);
-	
+
 			if (bytes > 0) {
 				updateSelectionKeys(connection);
 			} else if (bytes == -1) {
 				key.cancel();
 			}
-			
+
 		}
 
 		return serverChannel;
-		
+
 	}
+
+	/**
+	 * Handles write operations.
+	 * 
+	 * Delegates the write operation to the ProxyConnection object specifying
+	 * which one of the two channels (client or server) is the one on what we
+	 * are trying to write.
+	 * 
+	 */
 
 	public void write(SelectionKey key) throws IOException {
 		ProxyConnection connection = connections.get(key.channel());
 		connection.writeTo((SocketChannel) key.channel());
 		updateSelectionKeys(connection);
 	}
+
+	/**
+	 * Updates selector keys for a specific connection.
+	 * 
+	 * Always sets the OP_READ flag, in case any of the two endpoints (client,
+	 * server) wants write something to each other.
+	 * 
+	 * In case there's pending information in any of the write buffers for a
+	 * specific channel, sets the channel OP_WRITE flag.
+	 * 
+	 * @param connection
+	 * @throws ClosedChannelException
+	 */
 
 	private void updateSelectionKeys(ProxyConnection connection)
 			throws ClosedChannelException {
@@ -89,11 +138,12 @@ public class ClientHandler implements TCPHandler {
 		if (connection.hasClient())
 			updateChannelKeys(connection, connection.getClientChannel());
 	}
-	
-	private void updateChannelKeys(ProxyConnection connection, SocketChannel channel) 
-			throws ClosedChannelException {
-		if (connection.hasInformationForChannel(channel)) 
-			channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+
+	private void updateChannelKeys(ProxyConnection connection,
+			SocketChannel channel) throws ClosedChannelException {
+		if (connection.hasInformationForChannel(channel))
+			channel.register(selector, SelectionKey.OP_READ
+					| SelectionKey.OP_WRITE);
 		else
 			channel.register(selector, SelectionKey.OP_READ);
 	}
