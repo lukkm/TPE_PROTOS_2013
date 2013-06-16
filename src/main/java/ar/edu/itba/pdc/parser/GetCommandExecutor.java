@@ -1,5 +1,6 @@
 package ar.edu.itba.pdc.parser;
 
+import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class GetCommandExecutor implements CommandExecutor{
@@ -17,8 +18,14 @@ public class GetCommandExecutor implements CommandExecutor{
 		commandManager = ConfigurationCommands.getInstance();
 	}
 	
-	public boolean execute(String command, String value) {
-		commandManager.saveFile(); //???
-		return false;
+	public String execute(String command, String value) {
+		commandManager.saveFile();
+		String ans = null;
+		if (command.equals("getStatistics")) {
+			ans = StatisticsFilter.getInstance().execute();
+		} else if (command.equals("monitor")) {
+			//TODO
+		}
+		return ans;
 	}
 }

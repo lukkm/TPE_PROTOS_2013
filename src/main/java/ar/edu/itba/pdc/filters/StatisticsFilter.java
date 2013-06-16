@@ -21,7 +21,7 @@ public class StatisticsFilter implements Filter {
 	private static final int ACCESS_UNIT = 1;
 	private static int interval = DEFAULT_INTERVAL;
 	private static StatisticsFilter instance = null;
-	
+
 	private boolean statisticsEnabled = false;
 	private long initialStatisticsTime = -1;
 
@@ -32,7 +32,7 @@ public class StatisticsFilter implements Filter {
 			instance = new StatisticsFilter();
 		return instance;
 	}
-	
+
 	public StatisticsFilter() {
 		if (usersStatistics == null) {
 			usersStatistics = new HashMap<String, PersonalStatistic>();
@@ -41,77 +41,55 @@ public class StatisticsFilter implements Filter {
 		}
 	}
 
-	public File execute() {
+	public String execute() {
 		int currInterval = getCurrentInterval();
 		int globalTotalAccesses = 0, globalTotalByteTransfers = 0;
 		int[] globalAccessByInterval = new int[currInterval], byteTransferByInterval = new int[currInterval];
+		String ans = "";
 		Date date = new Date(System.currentTimeMillis());
-		// String slash = System.getProperty("path.separator");
-		String slash = "/";
-		String home = System.getProperty("user.home");
-		try {
-			File f = new File(home + slash + "ProxyStatistics" + slash + date);
-			FileWriter fstream = new FileWriter(f);
-			BufferedWriter out = new BufferedWriter(fstream);
-			out.write("Estadistica del proxy - " + date);
-			out.newLine();
-			out.newLine();
-			for (PersonalStatistic ps : usersStatistics.values()) {
-				System.out.println("Entro en personal Statistics");
-				out.write("Estadistica del Usuario: " + ps.jid);
-				out.newLine();
+		ans += "Estadistica del proxy - " + date + "\n\n";
+		for (PersonalStatistic ps : usersStatistics.values()) {
+			ans += "Estadistica del Usuario: " + ps.jid + "\n";
 
-				int userTotalAccesses = 0, userTotalBytesTransfered = 0;
-				int[] userAccessByInterval = new int[currInterval], userByteTransferByInterval = new int[currInterval];
+			int userTotalAccesses = 0, userTotalBytesTransfered = 0;
+			int[] userAccessByInterval = new int[currInterval], userByteTransferByInterval = new int[currInterval];
 
-				for (Entry<Integer, Integer> access : ps.accessBetweenIntervals
-						.entrySet()) {
-					globalAccessByInterval[access.getKey()] += access
-							.getValue();
-					userTotalAccesses += access.getValue();
-				}
-				globalTotalAccesses += userTotalAccesses;
-
-				for (Entry<Integer, Integer> bytesTransfered : ps.bytesBetweenIntervals
-						.entrySet()) {
-					byteTransferByInterval[bytesTransfered.getKey()] += bytesTransfered
-							.getValue();
-					userTotalBytesTransfered += bytesTransfered.getValue();
-				}
-				globalTotalByteTransfers += userTotalBytesTransfered;
-
-				out.write("Accesos totales del usuario:    " + ps.jid
-						+ userTotalAccesses);
-				out.newLine();
-				out.write("Bytes transferidos del usuario: " + ps.jid
-						+ userTotalBytesTransfered);
-				out.newLine();
-				out.write("Histograma de accesos del usuario: " + ps.jid);
-				out.newLine();
-				printHistogram(userAccessByInterval, currInterval, ACCESS_UNIT);
-				out.write("Histograma de transferencia del usuario: " + ps.jid);
-				out.newLine();
-				printHistogram(userByteTransferByInterval, currInterval,
-						TRANSFER_UNIT);
+			for (Entry<Integer, Integer> access : ps.accessBetweenIntervals
+					.entrySet()) {
+				globalAccessByInterval[access.getKey()] += access.getValue();
+				userTotalAccesses += access.getValue();
 			}
-			out.write("Estadistica General");
-			out.newLine();
-			out.write("Accesos totales al sistema: " + globalTotalAccesses);
-			out.write("Bytes transferidos del sistema: "
-					+ globalTotalByteTransfers);
-			out.write("Histograma de accesos totales: ");
-			out.newLine();
-			printHistogram(globalAccessByInterval, currInterval, ACCESS_UNIT);
-			out.write("Histograma de transferencias totales: ");
-			out.newLine();
-			printHistogram(byteTransferByInterval, currInterval, TRANSFER_UNIT);
+			globalTotalAccesses += userTotalAccesses;
 
-			out.close();
-			return f;
-		} catch (Exception e) {
-			System.err.println("Error: " + e.getMessage());
+			for (Entry<Integer, Integer> bytesTransfered : ps.bytesBetweenIntervals
+					.entrySet()) {
+				byteTransferByInterval[bytesTransfered.getKey()] += bytesTransfered
+						.getValue();
+				userTotalBytesTransfered += bytesTransfered.getValue();
+			}
+			globalTotalByteTransfers += userTotalBytesTransfered;
+
+			ans += "Accesos totales del usuario:    " + ps.jid
+					+ userTotalAccesses + "\n";
+
+			ans += "Bytes transferidos del usuario: " + ps.jid
+					+ userTotalBytesTransfered + "\n";
+			ans += "Histograma de accesos del usuario: " + ps.jid + "\n";
+			printHistogram(userAccessByInterval, currInterval, ACCESS_UNIT);
+			ans += "Histograma de transferencia del usuario: " + ps.jid + "\n";
+			printHistogram(userByteTransferByInterval, currInterval,
+					TRANSFER_UNIT);
 		}
-		return null;
+		ans += "Estadistica General \n";
+		ans += "Accesos totales al sistema: " + globalTotalAccesses + "\n";
+		ans += "Bytes transferidos del sistema: " + globalTotalByteTransfers
+				+ "\n";
+		ans += "Histograma de accesos totales: \n";
+		printHistogram(globalAccessByInterval, currInterval, ACCESS_UNIT);
+		ans += "Histograma de transferencias totales: \n";
+		printHistogram(byteTransferByInterval, currInterval, TRANSFER_UNIT);
+
+		return ans;
 	}
 
 	public void setInterval(int minutes) {
