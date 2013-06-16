@@ -13,7 +13,7 @@ import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
-public class StatisticsFilter implements Filter, ExternalFunction {
+public class StatisticsFilter implements Filter {
 
 	private static final int DEFAULT_INTERVAL = 120000; // 2 minutos en
 														// milisegundos
