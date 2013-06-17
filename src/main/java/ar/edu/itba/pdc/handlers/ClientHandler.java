@@ -105,6 +105,11 @@ public class ClientHandler extends Handler {
 				updateSelectionKeys(connection);
 			} else if (bytes == -1) {
 				/* Loggear */
+				ProxyConnection conn = connections.get(key.channel());
+				if (conn.hasClient())
+					connections.remove(conn.getClientChannel());
+				if (conn.hasServer())
+					connections.remove(conn.getServerChannel());
 				key.cancel();
 			}
 
