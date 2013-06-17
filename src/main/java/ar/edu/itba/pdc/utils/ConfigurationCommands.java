@@ -1,6 +1,5 @@
 package ar.edu.itba.pdc.utils;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,7 +7,6 @@ import java.util.Properties;
 
 public class ConfigurationCommands {
 	private Properties props;
-	private FileInputStream fis;
 
 	private static ConfigurationCommands instance;
 
@@ -21,12 +19,7 @@ public class ConfigurationCommands {
 	private ConfigurationCommands() {
 		this.props = new Properties();
 		try {
-			String current = new java.io.File(".").getCanonicalPath();
-			this.fis = new FileInputStream(
-					current
-							+ "/src/main/java/ar/edu/itba/pdc/resources/parsedcommands.properties");
-			props.load(fis);
-
+			props.load(getClass().getResourceAsStream("/parsedcommands.properties"));
 		} catch (Exception e) {
 			System.out.println("IO Error");
 		}

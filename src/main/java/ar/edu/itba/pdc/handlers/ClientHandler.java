@@ -71,6 +71,7 @@ public class ClientHandler extends Handler {
 						serverChannel = SocketChannel.open();
 						String serverToConnect = Multiplexing.getInstance()
 								.getUserServer(username);
+						/* Loggear */
 						System.out
 								.println("---------------------------------------------------------------------");
 						System.out.println("Connecting to: " + serverToConnect);
