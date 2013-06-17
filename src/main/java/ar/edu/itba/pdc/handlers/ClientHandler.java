@@ -139,13 +139,4 @@ public class ClientHandler extends Handler implements TCPHandler {
 					.getClientChannel()), connection.getClientChannel());
 	}
 
-	// private void updateChannelKeys(ProxyConnection connection,
-	// SocketChannel channel) throws ClosedChannelException {
-	// if (connection.hasInformationForChannel(channel))
-	// channel.register(selector, SelectionKey.OP_READ
-	// | SelectionKey.OP_WRITE);
-	// else
-	// channel.register(selector, SelectionKey.OP_READ);
-	// }
-
 }
