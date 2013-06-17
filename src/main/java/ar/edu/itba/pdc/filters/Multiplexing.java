@@ -7,7 +7,7 @@ import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class Multiplexing{
 	
-	private String defaultServer = "hermes.jabber.org";
+	private String defaultServer = "10.6.0.186";
 	private Map<String, String> usersOwnServers = null;
 	
 	private static Multiplexing instance = null;
