@@ -393,7 +393,7 @@ public class ProxyConnection {
 
 	public void handleConnectionStanza(SocketChannel s) throws IOException {
 		int length = read(s);
-		String read = new String(getBuffer(s, BufferType.read).array())
+		String read = new String(buffersMap.get(s).getBufferArray(BufferType.read))
 				.substring(0, length);
 		System.out.println(read);
 		switch (state) {
@@ -406,8 +406,6 @@ public class ProxyConnection {
 					} else {
 						state = ConnectionState.waitingForStream;
 					}
-				} else {
-					/* ERROR */
 				}
 				break;
 			case waitingForStream :
@@ -415,8 +413,6 @@ public class ProxyConnection {
 					state = ConnectionState.negotiating;
 					sendMessage(s, INITIAL_SERVER_STREAM);
 					sendMessage(s, NEGOTIATION);
-				} else {
-					/* ERROR */
 				}
 				break;
 			case negotiating :
@@ -447,6 +443,7 @@ public class ProxyConnection {
 				}
 				break;
 		}
+		buffersMap.get(s).clearBuffer(BufferType.read);
 	}
 
 	/**

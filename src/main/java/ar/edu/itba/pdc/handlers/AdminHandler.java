@@ -14,7 +14,7 @@ import ar.edu.itba.pdc.parser.AdminParser;
 import ar.edu.itba.pdc.proxy.ChannelBuffers;
 import ar.edu.itba.pdc.proxy.enumerations.BufferType;
 
-public class AdminHandler extends Handler implements TCPHandler {
+public class AdminHandler extends Handler {
 
 	private Map<SocketChannel, ChannelBuffers> config;
 	private AdminParser parser;

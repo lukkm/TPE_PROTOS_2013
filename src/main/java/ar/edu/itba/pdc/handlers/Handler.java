@@ -5,7 +5,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
-public abstract class Handler {
+public abstract class Handler implements TCPHandler {
 
 	private Selector selector;
 	
@@ -25,4 +25,5 @@ public abstract class Handler {
 	protected void register(SocketChannel s, int ops) throws ClosedChannelException {
 		s.register(selector, ops);
 	}
+	
 }

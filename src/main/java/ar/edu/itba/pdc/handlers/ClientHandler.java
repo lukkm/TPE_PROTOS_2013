@@ -12,7 +12,7 @@ import java.util.Map;
 import ar.edu.itba.pdc.filters.Multiplexing;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 
-public class ClientHandler extends Handler implements TCPHandler {
+public class ClientHandler extends Handler {
 
 	private Map<SocketChannel, ProxyConnection> connections;
 
