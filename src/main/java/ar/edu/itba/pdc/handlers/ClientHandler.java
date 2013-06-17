@@ -6,6 +6,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +35,7 @@ public class ClientHandler extends Handler {
 	 */
 
 	public void accept(SocketChannel channel) throws IOException {
+		/* Loggear */
 		connections.put(channel, new ProxyConnection(channel));
 	}
 
@@ -65,22 +67,31 @@ public class ClientHandler extends Handler {
 				connection.handleConnectionStanza(s);
 				if (connection.readyToConnectToServer()) {
 					String username = connection.getClientUsername();
-					serverChannel = SocketChannel.open();
-					String serverToConnect = Multiplexing.getInstance()
-							.getUserServer(username);
-					System.out
-							.println("---------------------------------------------------------------------");
-					System.out.println("Connecting to: " + serverToConnect);
-					System.out
-							.println("---------------------------------------------------------------------");
-					serverChannel.connect(new InetSocketAddress(
-							serverToConnect, 5222));
-					connection.setServerName("jabber.org");
-					serverChannel.configureBlocking(false);
-					register(serverChannel, SelectionKey.OP_READ);
-					connection.setServer(serverChannel);
-					connection.writeFirstStreamToServer();
-					connections.put(serverChannel, connection);
+					try {
+						serverChannel = SocketChannel.open();
+						String serverToConnect = Multiplexing.getInstance()
+								.getUserServer(username);
+						System.out
+								.println("---------------------------------------------------------------------");
+						System.out.println("Connecting to: " + serverToConnect);
+						System.out
+								.println("---------------------------------------------------------------------");
+						serverChannel.connect(new InetSocketAddress(
+								serverToConnect, 5222));
+						connection.setServerName("jabber.org");
+						serverChannel.configureBlocking(false);
+						register(serverChannel, SelectionKey.OP_READ);
+						connection.setServer(serverChannel);
+						connection.writeFirstStreamToServer();
+						connections.put(serverChannel, connection);
+					} catch (UnresolvedAddressException e) {
+						/* Loggear */
+						connections.remove(key.channel());
+						serverChannel.close();
+						key.channel().close();
+						key.cancel();
+						return null;
+					}
 				}
 			}
 			updateSelectionKeys(connection);
@@ -92,6 +103,7 @@ public class ClientHandler extends Handler {
 			if (bytes > 0) {
 				updateSelectionKeys(connection);
 			} else if (bytes == -1) {
+				/* Loggear */
 				key.cancel();
 			}
 
