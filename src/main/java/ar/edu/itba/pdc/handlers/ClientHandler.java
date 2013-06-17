@@ -13,13 +13,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import ar.edu.itba.pdc.filters.Multiplexing;
+import ar.edu.itba.pdc.logger.XMPPLogger;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 
 public class ClientHandler extends Handler {
 
 	private Map<SocketChannel, ProxyConnection> connections;
 	private ExecutorService threadPool;
-
+	private XMPPLogger logger = XMPPLogger.getInstance();
+	
 	public ClientHandler(Selector selector) {
 		super(selector);
 		this.connections = new HashMap<SocketChannel, ProxyConnection>();
@@ -39,7 +41,7 @@ public class ClientHandler extends Handler {
 	 */
 
 	public void accept(SocketChannel channel) throws IOException {
-		/* Loggear */
+		logger.info("Incoming new connection from client");
 		connections.put(channel, new ProxyConnection(channel));
 	}
 
@@ -71,11 +73,11 @@ public class ClientHandler extends Handler {
 				connection.handleConnectionStanza(s);
 				if (connection.readyToConnectToServer()) {
 					String username = connection.getClientUsername();
+					String serverToConnect = "";
 					try {
 						serverChannel = SocketChannel.open();
-						String serverToConnect = Multiplexing.getInstance()
+						serverToConnect = Multiplexing.getInstance()
 								.getUserServer(username);
-						/* Loggear */
 						System.out
 								.println("---------------------------------------------------------------------");
 						System.out.println("Connecting to: " + serverToConnect);
@@ -90,7 +92,7 @@ public class ClientHandler extends Handler {
 						connection.writeFirstStreamToServer();
 						connections.put(serverChannel, connection);
 					} catch (UnresolvedAddressException e) {
-						/* Loggear */
+						logger.warn("Can't find server with address " + serverToConnect);
 						connections.remove(key.channel());
 						serverChannel.close();
 						key.channel().close();
@@ -110,7 +112,7 @@ public class ClientHandler extends Handler {
 						if (bytes > 0) {
 							updateSelectionKeys(connection);
 						} else if (bytes == -1) {
-							/* Loggear */
+							logger.info("Channel disconnected");
 							ProxyConnection conn = connections.get(key.channel());
 							if (conn.hasClient())
 								connections.remove(conn.getClientChannel());
@@ -119,7 +121,6 @@ public class ClientHandler extends Handler {
 							key.cancel();
 						}
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}

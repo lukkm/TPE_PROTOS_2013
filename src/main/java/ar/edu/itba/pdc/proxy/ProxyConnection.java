@@ -97,11 +97,9 @@ public class ProxyConnection {
 	 */
 
 	public void setServerName(String name) {
-
 		this.serverName = name;
 		this.clientJID = clientUsername + "@" + serverName;
-		logger.info("Client ID: " + clientJID);
-		logger.info("To server: " + name);
+		logger.info("Client ID: " + clientJID + " connected to server: " + name);
 
 	}
 
@@ -132,8 +130,6 @@ public class ProxyConnection {
 	public void expandBuffer(SocketChannel s, BufferType type) {
 		ChannelBuffers buffers = buffersMap.get(s);
 		buffers.expandBuffer(type);
-		System.out.println("Quedo en el buffer : "
-				+ new String(buffers.getBuffer(type).array()));
 	}
 
 	/**
@@ -417,6 +413,8 @@ public class ProxyConnection {
 					} else {
 						state = ConnectionState.waitingForStream;
 					}
+				} else {
+					logger.warn("Invalid initial message from client");
 				}
 				break;
 			case waitingForStream :
@@ -424,6 +422,8 @@ public class ProxyConnection {
 					state = ConnectionState.negotiating;
 					sendMessage(s, INITIAL_SERVER_STREAM);
 					sendMessage(s, NEGOTIATION);
+				} else {
+					logger.warn("Invalid stream message from client");
 				}
 				break;
 			case negotiating :
@@ -437,6 +437,8 @@ public class ProxyConnection {
 							stringData.indexOf(0, 1));
 					this.state = ConnectionState.ready;
 					buffersMap.get(client).clearBuffer(BufferType.read);
+				} else {
+					logger.warn("Invalid authorization message from client");
 				}
 				break;
 			case connectingToServer :
@@ -445,11 +447,14 @@ public class ProxyConnection {
 					this.state = ConnectionState.connected;
 				} else if (read.startsWith("<?xml")) {
 					this.state = ConnectionState.waitingForServerFeatures;
+				} else {
+					logger.warn("Invalid initial message from server");
 				}
 				break;
 			case waitingForServerFeatures :
 				if (read.startsWith("<stream:features")) {
 					sendMessage(server, authorizationStream.getBytes());
+					logger.info("Client " + getClientJID() + " finished connecting to server.");
 					this.state = ConnectionState.connected;
 				} else {
 					this.state = ConnectionState.waitingForServerFeatures;
