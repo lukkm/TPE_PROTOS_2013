@@ -22,7 +22,7 @@ public class Multiplexing{
 	private Multiplexing() {
 		usersOwnServers = new HashMap<String, String>();
 		String multiplexed = ConfigurationCommands.getInstance().getProperty("multiplex");
-		defaultServer = ConfigurationCommands.getInstance().getProperty("defaultServer");
+//		defaultServer = ConfigurationCommands.getInstance().getProperty("defaultServer");
 		updateMultiplexedUsers(multiplexed);
 	}
 	
