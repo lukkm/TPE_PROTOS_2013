@@ -50,22 +50,22 @@ public class AdminHandler extends Handler {
 		int bytesRead = s.read(channelBuffers.getBuffer(BufferType.read));
 
 		try {
-			if (!parser.parseCommand(channelBuffers.getBuffer(BufferType.read),
-					bytesRead))
-				System.out.println("Mala sintaxis");
+			String response;
+			if ((response = parser.parseCommand(
+					channelBuffers.getBuffer(BufferType.read), bytesRead)) != null)
+				s.write(ByteBuffer.wrap(response.getBytes()));
 		} catch (BadSyntaxException e) {
 			System.out.println("Bad syntax");
+			s.write(ByteBuffer.wrap("BAD SYNTAX\n".getBytes()));
 		} catch (Exception e) {
-			System.out.println("Careta fixea");
-		}
-		// parseCommand(channelBuffers.getReadBuffer());
-		// channelBuffers.autoSynchronizeBuffers();
-		// String strCommand = new
-		// String(channelBuffers.getReadBuffer().array());
-
-		channelBuffers.getBuffer(BufferType.read).clear();
-		updateSelectionKeys(s);
-		return null;
+			System.out.println("Probably lost connection with the admin"); //TODO agregar al logger
+			s.close();
+			key.cancel();
+			return null;
+		} 
+			channelBuffers.getBuffer(BufferType.read).clear();
+			updateSelectionKeys(s);
+			return null;
 	}
 
 	/**
