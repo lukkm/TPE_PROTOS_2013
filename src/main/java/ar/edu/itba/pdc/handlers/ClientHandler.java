@@ -9,6 +9,8 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import ar.edu.itba.pdc.filters.Multiplexing;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
@@ -16,10 +18,12 @@ import ar.edu.itba.pdc.proxy.ProxyConnection;
 public class ClientHandler extends Handler {
 
 	private Map<SocketChannel, ProxyConnection> connections;
+	private ExecutorService threadPool;
 
 	public ClientHandler(Selector selector) {
 		super(selector);
 		this.connections = new HashMap<SocketChannel, ProxyConnection>();
+		this.threadPool = Executors.newFixedThreadPool(10);
 	}
 
 	/*
@@ -55,10 +59,10 @@ public class ClientHandler extends Handler {
 	 * 
 	 */
 
-	public SocketChannel read(SelectionKey key) throws IOException {
+	public SocketChannel read(final SelectionKey key) throws IOException {
 
-		SocketChannel s = (SocketChannel) key.channel();
-		ProxyConnection connection = connections.get(s);
+		final SocketChannel s = (SocketChannel) key.channel();
+		final ProxyConnection connection = connections.get(s);
 
 		SocketChannel serverChannel = null;
 
@@ -97,22 +101,31 @@ public class ClientHandler extends Handler {
 			}
 			updateSelectionKeys(connection);
 		} else {
-
-			/* Perform the read operation */
-			int bytes = connection.readFrom(s);
-
-			if (bytes > 0) {
-				updateSelectionKeys(connection);
-			} else if (bytes == -1) {
-				/* Loggear */
-				ProxyConnection conn = connections.get(key.channel());
-				if (conn.hasClient())
-					connections.remove(conn.getClientChannel());
-				if (conn.hasServer())
-					connections.remove(conn.getServerChannel());
-				key.cancel();
-			}
-
+			Runnable command = new Runnable() {
+				public void run() {
+					/* Perform the read operation */
+					int bytes;
+					try {
+						bytes = connection.readFrom(s);
+						if (bytes > 0) {
+							updateSelectionKeys(connection);
+						} else if (bytes == -1) {
+							/* Loggear */
+							ProxyConnection conn = connections.get(key.channel());
+							if (conn.hasClient())
+								connections.remove(conn.getClientChannel());
+							if (conn.hasServer())
+								connections.remove(conn.getServerChannel());
+							key.cancel();
+						}
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			};
+			
+			threadPool.execute(command);
 		}
 
 		return serverChannel;
@@ -128,10 +141,20 @@ public class ClientHandler extends Handler {
 	 * 
 	 */
 
-	public void write(SelectionKey key) throws IOException {
-		ProxyConnection connection = connections.get(key.channel());
-		connection.writeTo((SocketChannel) key.channel());
-		updateSelectionKeys(connection);
+	public void write(final SelectionKey key) throws IOException {
+		Runnable command = new Runnable() {
+		
+		public void run() {
+			ProxyConnection connection = connections.get(key.channel());
+			try {
+				connection.writeTo((SocketChannel) key.channel());
+				updateSelectionKeys(connection);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}};
+		
+		threadPool.execute(command);
 	}
 
 	/**

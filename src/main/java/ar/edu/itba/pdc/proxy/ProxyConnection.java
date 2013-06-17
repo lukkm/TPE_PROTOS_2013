@@ -18,6 +18,7 @@ import ar.edu.itba.pdc.filters.SilentUsersFilter;
 import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.filters.TransformationFilter;
 import ar.edu.itba.pdc.jabber.Message;
+import ar.edu.itba.pdc.logger.XMPPLogger;
 import ar.edu.itba.pdc.parser.XMPPParser;
 import ar.edu.itba.pdc.proxy.enumerations.BufferType;
 import ar.edu.itba.pdc.proxy.enumerations.ConnectionState;
@@ -39,6 +40,8 @@ public class ProxyConnection {
 	/* Server connection parameters */
 	private String serverName = null;
 	private String authorizationStream = null;
+	
+	private XMPPLogger logger = XMPPLogger.getInstance();
 
 	/* Server Streams */
 	protected static final byte[] INITIAL_SERVER_STREAM = ("<?xml version='1.0' ?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>")
@@ -60,6 +63,7 @@ public class ProxyConnection {
 	}
 
 	public ProxyConnection(SocketChannel client) {
+		logger.info("Connected Client");
 		this.client = client;
 		this.state = ConnectionState.noState;
 		buffersMap.put(client, new ChannelBuffers());
@@ -93,8 +97,12 @@ public class ProxyConnection {
 	 */
 
 	public void setServerName(String name) {
+
 		this.serverName = name;
 		this.clientJID = clientUsername + "@" + serverName;
+		logger.info("Client ID: " + clientJID);
+		logger.info("To server: " + name);
+
 	}
 
 	/**
@@ -251,6 +259,13 @@ public class ProxyConnection {
 
 	public int readFrom(SocketChannel s) throws IOException {
 		int bytesRead = read(s);
+		
+		process(bytesRead, s);
+		
+		return bytesRead;
+	}
+	
+	private synchronized void process(int bytesRead, SocketChannel s) throws IOException {
 		if (bytesRead > 0) {
 			/* Codigo para borrar despues */
 			if (s == client)
@@ -298,15 +313,12 @@ public class ProxyConnection {
 
 				}
 				getBuffer(s, BufferType.read).clear();
-				return bytesRead;
 			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
 			} catch (IncompleteElementsException e) {
 				expandBuffer(s, BufferType.read);
 			}
 		}
-
-		return bytesRead;
 	}
 
 	/**
@@ -315,15 +327,13 @@ public class ProxyConnection {
 	 * @param s
 	 */
 
-	public int writeTo(SocketChannel s) throws IOException {
+	public synchronized int writeTo(SocketChannel s) throws IOException {
 		int bytesWrote = 0;
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
-			if (channelBuffers != null
-					&& channelBuffers.hasRemainingFor(BufferType.write)) {
+			if (channelBuffers != null && channelBuffers.hasRemainingFor(BufferType.write)) {
 				channelBuffers.flipBuffer(BufferType.write);
-				bytesWrote = s
-						.write(channelBuffers.getBuffer(BufferType.write));
+				bytesWrote = s.write(channelBuffers.getBuffer(BufferType.write));
 				channelBuffers.clearBuffer(BufferType.write);
 			}
 		}
@@ -365,6 +375,7 @@ public class ProxyConnection {
 	 * @param s
 	 * @param bytes
 	 */
+
 
 	private void sendMessage(SocketChannel s, byte[] bytes) {
 		appendToBuffer(s, BufferType.write, bytes);
@@ -440,7 +451,11 @@ public class ProxyConnection {
 				if (read.startsWith("<stream:features")) {
 					sendMessage(server, authorizationStream.getBytes());
 					this.state = ConnectionState.connected;
+				} else {
+					this.state = ConnectionState.waitingForServerFeatures;
 				}
+				break;
+			default:
 				break;
 		}
 		buffersMap.get(s).clearBuffer(BufferType.read);
