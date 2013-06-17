@@ -63,7 +63,6 @@ public class ProxyConnection {
 	}
 
 	public ProxyConnection(SocketChannel client) {
-		logger.info("Connected Client");
 		this.client = client;
 		this.state = ConnectionState.noState;
 		buffersMap.put(client, new ChannelBuffers());

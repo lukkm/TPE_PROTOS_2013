@@ -21,7 +21,7 @@ public class ClientHandler extends Handler {
 	private Map<SocketChannel, ProxyConnection> connections;
 	private ExecutorService threadPool;
 	private XMPPLogger logger = XMPPLogger.getInstance();
-	
+
 	public ClientHandler(Selector selector) {
 		super(selector);
 		this.connections = new HashMap<SocketChannel, ProxyConnection>();
@@ -41,7 +41,8 @@ public class ClientHandler extends Handler {
 	 */
 
 	public void accept(SocketChannel channel) throws IOException {
-		logger.info("Incoming new connection from client");
+		logger.info("Incoming new connection from client "
+				+ channel.getRemoteAddress().toString());
 		connections.put(channel, new ProxyConnection(channel));
 	}
 
@@ -92,7 +93,8 @@ public class ClientHandler extends Handler {
 						connection.writeFirstStreamToServer();
 						connections.put(serverChannel, connection);
 					} catch (UnresolvedAddressException e) {
-						logger.warn("Can't find server with address " + serverToConnect);
+						logger.warn("Can't find server with address "
+								+ serverToConnect);
 						connections.remove(key.channel());
 						serverChannel.close();
 						key.channel().close();
@@ -112,20 +114,14 @@ public class ClientHandler extends Handler {
 						if (bytes > 0) {
 							updateSelectionKeys(connection);
 						} else if (bytes == -1) {
-							logger.info("Channel disconnected");
-							ProxyConnection conn = connections.get(key.channel());
-							if (conn.hasClient())
-								connections.remove(conn.getClientChannel());
-							if (conn.hasServer())
-								connections.remove(conn.getServerChannel());
-							key.cancel();
+							disconnect(key);
 						}
 					} catch (IOException e) {
-						logger.error("Can't read from socket");
+						disconnect(key);
 					}
 				}
 			};
-			
+
 			threadPool.execute(command);
 		}
 
@@ -144,17 +140,18 @@ public class ClientHandler extends Handler {
 
 	public void write(final SelectionKey key) throws IOException {
 		Runnable command = new Runnable() {
-		
-		public void run() {
-			ProxyConnection connection = connections.get(key.channel());
-			try {
-				connection.writeTo((SocketChannel) key.channel());
-				updateSelectionKeys(connection);
-			} catch (IOException e) {
-				logger.error("Can't write to socket");
+
+			public void run() {
+				ProxyConnection connection = connections.get(key.channel());
+				try {
+					connection.writeTo((SocketChannel) key.channel());
+					updateSelectionKeys(connection);
+				} catch (IOException e) {
+					logger.error("Can't write to socket");
+				}
 			}
-		}};
-		
+		};
+
 		threadPool.execute(command);
 	}
 
@@ -179,6 +176,25 @@ public class ClientHandler extends Handler {
 		if (connection.hasClient())
 			updateChannelKeys(connection.hasInformationForChannel(connection
 					.getClientChannel()), connection.getClientChannel());
+	}
+
+	/**
+	 * Disconnects the channels associated with this key and then cancels the
+	 * key
+	 * 
+	 * @param key
+	 */
+
+	private void disconnect(SelectionKey key) {
+		logger.info("Channel disconnected");
+		ProxyConnection conn = connections.get(key.channel());
+		if (conn != null) {
+			if (conn.hasClient())
+				connections.remove(conn.getClientChannel());
+			if (conn.hasServer())
+				connections.remove(conn.getServerChannel());
+		}
+		key.cancel();
 	}
 
 }
