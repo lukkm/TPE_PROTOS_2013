@@ -7,7 +7,7 @@ import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class Multiplexing{
 	
-	private String defaultServer = "10.6.0.186";
+	private String defaultServer = "hermes.jabber.org";
 	private Map<String, String> usersOwnServers = null;
 	
 	private static Multiplexing instance = null;
@@ -18,15 +18,15 @@ public class Multiplexing{
 		return instance;
 	}
 	
-	/* Desde archivo de configuracion */
+	/* From configuration file */
 	private Multiplexing() {
 		usersOwnServers = new HashMap<String, String>();
 		String multiplexed = ConfigurationCommands.getInstance().getProperty("multiplex");
-//		defaultServer = ConfigurationCommands.getInstance().getProperty("defaultServer");
+		defaultServer = ConfigurationCommands.getInstance().getProperty("defaultServer");
 		updateMultiplexedUsers(multiplexed);
 	}
 	
-	/* Para cambios desde consola */
+	/* From admin changes */
 	public void updateMultiplexedUsers (String rawUsers) {
 		if (rawUsers != null && !rawUsers.equals("")) {
 			for (String s : rawUsers.split(";")) {
