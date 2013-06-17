@@ -14,14 +14,13 @@ import ar.edu.itba.pdc.parser.AdminParser;
 import ar.edu.itba.pdc.proxy.ChannelBuffers;
 import ar.edu.itba.pdc.proxy.enumerations.BufferType;
 
-public class AdminHandler implements TCPHandler {
+public class AdminHandler extends Handler implements TCPHandler {
 
 	private Map<SocketChannel, ChannelBuffers> config;
-	private Selector selector;
 	private AdminParser parser;
 
 	public AdminHandler(Selector selector) {
-		this.selector = selector;
+		super(selector);
 		config = new HashMap<SocketChannel, ChannelBuffers>();
 		parser = new AdminParser();
 	}
@@ -102,11 +101,6 @@ public class AdminHandler implements TCPHandler {
 	private void updateSelectionKeys(SocketChannel s)
 			throws ClosedChannelException {
 		ChannelBuffers buffers = config.get(s);
-		if (buffers.getBuffer(BufferType.write).capacity() != buffers
-				.getBuffer(BufferType.write).remaining()) {
-			s.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		} else {
-			s.register(selector, SelectionKey.OP_READ);
-		}
+		updateChannelKeys(buffers.hasInformationFor(BufferType.write), s);
 	}
 }

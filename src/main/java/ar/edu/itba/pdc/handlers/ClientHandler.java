@@ -12,13 +12,12 @@ import java.util.Map;
 import ar.edu.itba.pdc.filters.Multiplexing;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
 
-public class ClientHandler implements TCPHandler {
+public class ClientHandler extends Handler implements TCPHandler {
 
 	private Map<SocketChannel, ProxyConnection> connections;
-	private Selector selector;
 
 	public ClientHandler(Selector selector) {
-		this.selector = selector;
+		super(selector);
 		this.connections = new HashMap<SocketChannel, ProxyConnection>();
 	}
 
@@ -78,7 +77,7 @@ public class ClientHandler implements TCPHandler {
 							serverToConnect, 5222));
 					connection.setServerName("jabber.org");
 					serverChannel.configureBlocking(false);
-					serverChannel.register(selector, SelectionKey.OP_READ);
+					register(serverChannel, SelectionKey.OP_READ);
 					connection.setServer(serverChannel);
 					connection.writeFirstStreamToServer();
 					connections.put(serverChannel, connection);
@@ -133,18 +132,20 @@ public class ClientHandler implements TCPHandler {
 	private void updateSelectionKeys(ProxyConnection connection)
 			throws ClosedChannelException {
 		if (connection.hasServer())
-			updateChannelKeys(connection, connection.getServerChannel());
+			updateChannelKeys(connection.hasInformationForChannel(connection
+					.getServerChannel()), connection.getServerChannel());
 		if (connection.hasClient())
-			updateChannelKeys(connection, connection.getClientChannel());
+			updateChannelKeys(connection.hasInformationForChannel(connection
+					.getClientChannel()), connection.getClientChannel());
 	}
 
-	private void updateChannelKeys(ProxyConnection connection,
-			SocketChannel channel) throws ClosedChannelException {
-		if (connection.hasInformationForChannel(channel))
-			channel.register(selector, SelectionKey.OP_READ
-					| SelectionKey.OP_WRITE);
-		else
-			channel.register(selector, SelectionKey.OP_READ);
-	}
+	// private void updateChannelKeys(ProxyConnection connection,
+	// SocketChannel channel) throws ClosedChannelException {
+	// if (connection.hasInformationForChannel(channel))
+	// channel.register(selector, SelectionKey.OP_READ
+	// | SelectionKey.OP_WRITE);
+	// else
+	// channel.register(selector, SelectionKey.OP_READ);
+	// }
 
 }
