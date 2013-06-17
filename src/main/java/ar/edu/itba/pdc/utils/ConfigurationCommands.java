@@ -6,11 +6,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import ar.edu.itba.pdc.logger.XMPPLogger;
+
 public class ConfigurationCommands {
 	private Properties props;
 	private FileInputStream fis;
 
 	private static ConfigurationCommands instance;
+	private XMPPLogger logger = XMPPLogger.getInstance();
 
 	public static ConfigurationCommands getInstance() {
 		if (instance == null)
@@ -33,13 +36,16 @@ public class ConfigurationCommands {
 	}
 
 	public String getProperty(String property) {
+		if (props.get(property) == null)
+			return "";
 		return props.get(property).toString();
 	}
 
 	public void setProperty(String property, String value) {
+		logger.info("Applied " + property + " to " + value);
 		props.setProperty(property, value);
 	}
-	
+
 	public boolean hasProperty(String property) {
 		return props.containsKey(property);
 	}

@@ -2,10 +2,10 @@ package ar.edu.itba.pdc.jabber;
 
 public class Presence extends JabberElement {
 
-	private String from, to, type, delay;
+	private String to, type, delay;
 	
 	public Presence(String from, String to) {
-		this.from = from;
+		super(from);
 		this.to = to;
 	}
 	
@@ -15,10 +15,6 @@ public class Presence extends JabberElement {
 	
 	public void setDelay(String delay) {
 		this.delay = delay;
-	}
-		
-	public String getFrom() {
-		return from;
 	}
 	
 	public String getTo() {
