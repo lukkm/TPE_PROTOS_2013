@@ -121,7 +121,7 @@ public class ClientHandler extends Handler {
 							key.cancel();
 						}
 					} catch (IOException e) {
-						e.printStackTrace();
+						logger.error("Can't read from socket");
 					}
 				}
 			};
@@ -151,7 +151,7 @@ public class ClientHandler extends Handler {
 				connection.writeTo((SocketChannel) key.channel());
 				updateSelectionKeys(connection);
 			} catch (IOException e) {
-				e.printStackTrace();
+				logger.error("Can't write to socket");
 			}
 		}};
 		

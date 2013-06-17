@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ar.edu.itba.pdc.exceptions.BadSyntaxException;
+import ar.edu.itba.pdc.logger.XMPPLogger;
 import ar.edu.itba.pdc.parser.AdminParser;
 import ar.edu.itba.pdc.proxy.ChannelBuffers;
 import ar.edu.itba.pdc.proxy.enumerations.BufferType;
@@ -18,7 +19,8 @@ public class AdminHandler extends Handler {
 
 	private Map<SocketChannel, ChannelBuffers> config;
 	private AdminParser parser;
-
+	private XMPPLogger logger = XMPPLogger.getInstance();
+	
 	public AdminHandler(Selector selector) {
 		super(selector);
 		config = new HashMap<SocketChannel, ChannelBuffers>();
@@ -34,6 +36,7 @@ public class AdminHandler extends Handler {
 	 */
 
 	public void accept(SocketChannel channel) throws IOException {
+		logger.info("New admin connected");
 		config.put(channel, new ChannelBuffers());
 	}
 
@@ -58,7 +61,7 @@ public class AdminHandler extends Handler {
 			System.out.println("Bad syntax");
 			s.write(ByteBuffer.wrap("BAD SYNTAX\n".getBytes()));
 		} catch (Exception e) {
-			System.out.println("Probably lost connection with the admin"); //TODO agregar al logger
+			logger.error("Lost connection with the admin");
 			s.close();
 			key.cancel();
 			return null;
