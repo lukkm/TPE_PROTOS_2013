@@ -22,6 +22,7 @@ public class StatisticsFilter implements Filter, ExternalFunction {
 	private static int interval = DEFAULT_INTERVAL;
 	private static StatisticsFilter instance = null;
 	
+	@SuppressWarnings("unused")
 	private boolean statisticsEnabled = false;
 	private long initialStatisticsTime = -1;
 

@@ -251,6 +251,14 @@ public class ProxyConnection {
 
 	public int readFrom(SocketChannel s) throws IOException {
 		int bytesRead = read(s);
+		
+		process(bytesRead, s);
+		
+		return bytesRead;
+	}
+	
+	
+	private synchronized void process(int bytesRead, SocketChannel s) throws IOException {
 		if (bytesRead > 0) {
 			/* Codigo para borrar despues */
 			if (s == client)
@@ -298,15 +306,12 @@ public class ProxyConnection {
 
 				}
 				getBuffer(s, BufferType.read).clear();
-				return bytesRead;
 			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
 			} catch (IncompleteElementsException e) {
 				expandBuffer(s, BufferType.read);
 			}
 		}
-
-		return bytesRead;
 	}
 
 	/**
@@ -315,15 +320,13 @@ public class ProxyConnection {
 	 * @param s
 	 */
 
-	public int writeTo(SocketChannel s) throws IOException {
+	public synchronized int writeTo(SocketChannel s) throws IOException {
 		int bytesWrote = 0;
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
-			if (channelBuffers != null
-					&& channelBuffers.hasRemainingFor(BufferType.write)) {
+			if (channelBuffers != null && channelBuffers.hasRemainingFor(BufferType.write)) {
 				channelBuffers.flipBuffer(BufferType.write);
-				bytesWrote = s
-						.write(channelBuffers.getBuffer(BufferType.write));
+				bytesWrote = s.write(channelBuffers.getBuffer(BufferType.write));
 				channelBuffers.clearBuffer(BufferType.write);
 			}
 		}
@@ -441,6 +444,8 @@ public class ProxyConnection {
 					sendMessage(server, authorizationStream.getBytes());
 					this.state = ConnectionState.connected;
 				}
+				break;
+			default:
 				break;
 		}
 		buffersMap.get(s).clearBuffer(BufferType.read);

@@ -20,6 +20,7 @@ public abstract class Handler implements TCPHandler {
 					| SelectionKey.OP_WRITE);
 		else
 			channel.register(selector, SelectionKey.OP_READ);
+		selector.wakeup();
 	}
 	
 	protected void register(SocketChannel s, int ops) throws ClosedChannelException {

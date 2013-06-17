@@ -93,6 +93,8 @@ public class XMPPHandler extends DefaultHandler {
 				if (currentStanza.isMessage())
 					((Message)currentStanza.getElement()).setActive(str);
 				break;
+			default:
+				break;
 		}
 		if (indentCount > 0 && currentXMLElement != null) 
 			currentXMLElement.append(str);
