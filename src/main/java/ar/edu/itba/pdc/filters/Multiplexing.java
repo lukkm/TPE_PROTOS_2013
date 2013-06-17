@@ -7,7 +7,7 @@ import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class Multiplexing{
 	
-	private final String DEFAULT_SERVER_URL = "hermes.jabber.org";
+	private String defaultServer = "hermes.jabber.org";
 	private Map<String, String> usersOwnServers = null;
 	
 	private static Multiplexing instance = null;
@@ -22,6 +22,7 @@ public class Multiplexing{
 	private Multiplexing() {
 		usersOwnServers = new HashMap<String, String>();
 		String multiplexed = ConfigurationCommands.getInstance().getProperty("multiplex");
+		defaultServer = ConfigurationCommands.getInstance().getProperty("defaultServer");
 		updateMultiplexedUsers(multiplexed);
 	}
 	
@@ -39,7 +40,7 @@ public class Multiplexing{
 	public String getUserServer(String user) {
 		if (usersOwnServers.containsKey(user))
 			return usersOwnServers.get(user);
-		return DEFAULT_SERVER_URL;
+		return defaultServer;
 	}
 	
 	
