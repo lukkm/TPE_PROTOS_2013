@@ -1,15 +1,16 @@
 package ar.edu.itba.pdc.parser;
 
-import java.net.ResponseCache;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+
 import ar.edu.itba.pdc.exceptions.BadSyntaxException;
+import ar.edu.itba.pdc.parser.executors.AddToListCommandExecutor;
+import ar.edu.itba.pdc.parser.executors.AuthService;
 import ar.edu.itba.pdc.parser.executors.BooleanCommandExecutor;
 import ar.edu.itba.pdc.parser.executors.CommandExecutor;
 import ar.edu.itba.pdc.parser.executors.GetCommandExecutor;
-import ar.edu.itba.pdc.parser.executors.ListCommandExecutor;
-
+import ar.edu.itba.pdc.parser.executors.RemoveFromListCommandExecutor;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class AdminParser {
@@ -19,13 +20,15 @@ public class AdminParser {
 
 	public AdminParser() {
 		commandManager = ConfigurationCommands.getInstance();
-		commandTypes.put("silenceuser", ListCommandExecutor.getInstance());
+		commandTypes.put("silenceuser", AddToListCommandExecutor.getInstance());
 		commandTypes.put("statistics", BooleanCommandExecutor.getInstance());
 		commandTypes.put("monitor", BooleanCommandExecutor.getInstance());
 		commandTypes.put("getStatistics", GetCommandExecutor.getInstance());
-		commandTypes
-				.put("transformation", BooleanCommandExecutor.getInstance());
+		commandTypes.put("transformation", BooleanCommandExecutor.getInstance());
 		commandTypes.put("interval", BooleanCommandExecutor.getInstance());
+		commandTypes.put("unsilenceuser", RemoveFromListCommandExecutor.getInstance());
+		commandTypes.put("auth", AuthService.getInstance());
+		commandTypes.put("changePassword", AuthService.getInstance());
 	}
 
 	public String parseCommand(ByteBuffer readBuffer, int bytesRead)
@@ -70,7 +73,7 @@ public class AdminParser {
 				throw new BadSyntaxException();
 			}
 		}
-		return responseToAdmin;
+		return responseToAdmin + '\n';
 	}
 
 }

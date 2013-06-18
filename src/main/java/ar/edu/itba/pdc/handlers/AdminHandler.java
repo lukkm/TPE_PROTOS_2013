@@ -18,6 +18,7 @@ public class AdminHandler extends Handler {
 
 	private Map<SocketChannel, ChannelBuffers> config;
 	private AdminParser parser;
+	private boolean logged = false;
 
 	public AdminHandler(Selector selector) {
 		super(selector);
@@ -52,20 +53,29 @@ public class AdminHandler extends Handler {
 		try {
 			String response;
 			if ((response = parser.parseCommand(
-					channelBuffers.getBuffer(BufferType.read), bytesRead)) != null)
-				s.write(ByteBuffer.wrap(response.getBytes()));
+					channelBuffers.getBuffer(BufferType.read), bytesRead)) != null) {
+				if (logged || response.equals("PASSWORD OK\n")) {
+					logged = true;
+					s.write(ByteBuffer.wrap(response.getBytes()));
+				} else if (response.equals("INVALID PASSWORD\n")){
+					s.write(ByteBuffer.wrap(response.getBytes()));
+				} else {
+					s.write(ByteBuffer.wrap("Not logged in!\n".getBytes()));
+				}
+			}
 		} catch (BadSyntaxException e) {
 			System.out.println("Bad syntax");
 			s.write(ByteBuffer.wrap("BAD SYNTAX\n".getBytes()));
 		} catch (Exception e) {
+			logged = false;
 			System.out.println("Probably lost connection with the admin"); //TODO agregar al logger
 			s.close();
 			key.cancel();
 			return null;
-		} 
-			channelBuffers.getBuffer(BufferType.read).clear();
-			updateSelectionKeys(s);
-			return null;
+		}
+		channelBuffers.getBuffer(BufferType.read).clear();
+		updateSelectionKeys(s);
+		return null;
 	}
 
 	/**
