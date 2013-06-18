@@ -17,6 +17,7 @@ public class StatisticsFilter implements Filter {
 	private static final int TRANSFER_UNIT = 50;
 	private static final int ACCESS_UNIT = 1;
 	private static int interval = DEFAULT_INTERVAL;
+	private static int byteUnit = TRANSFER_UNIT;
 	private static StatisticsFilter instance = null;
 	@SuppressWarnings("unused")
 	private boolean statisticsEnabled = false;
@@ -74,17 +75,16 @@ public class StatisticsFilter implements Filter {
 				ans += "Bytes transferidos del usuario: "
 						+ userTotalBytesTransfered + "\n";
 				ans += "Histograma de ACCESOS del usuario: " + "\nINTERVALO ("
-						+ interval / 60000 + " mins)\t" + "UNIDAD ("
-						+ ACCESS_UNIT + " bytes)\n";
+						+ interval / 60000 + " mins)\n";
 
 				ans += printHistogram(userAccessByInterval, currInterval,
 						ACCESS_UNIT);
 				ans += "Histograma de TRANSFERENCIA del usuario: " + ps.jid
 						+ "\nINTERVALO (" + interval / 60000 + " mins)\t"
-						+ "UNIDAD (" + TRANSFER_UNIT + " bytes)\n";
+						+ "UNIDAD (" + byteUnit + " bytes)\n";
 				;
 				ans += printHistogram(userByteTransferByInterval, currInterval,
-						TRANSFER_UNIT);
+						byteUnit);
 			}
 		}
 		ans += "Estadistica General \n";
@@ -95,7 +95,7 @@ public class StatisticsFilter implements Filter {
 		ans += printHistogram(globalAccessByInterval, currInterval, ACCESS_UNIT);
 		ans += "Histograma de transferencias totales: \n";
 		ans += printHistogram(byteTransferByInterval, currInterval,
-				TRANSFER_UNIT);
+				byteUnit);
 		return ans + "----------------------------------END OF MESSAGE------------------------------------------\n";
 	}
 	
@@ -113,6 +113,10 @@ public class StatisticsFilter implements Filter {
 
 	public void setInterval(int minutes) {
 		interval = minutes * 60 * 1000;
+	}	
+	
+	public void setByteUnit(int byteUnit) {
+		this.byteUnit = byteUnit;  
 	}
 
 	public void enableStatistics() {
