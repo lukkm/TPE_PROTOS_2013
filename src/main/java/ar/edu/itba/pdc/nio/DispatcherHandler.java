@@ -54,10 +54,9 @@ public class DispatcherHandler {
 		handlerMap.put(adminChannel, adminHandler);
 
 		while (!Thread.interrupted()) {
-			if (selector.select(TIMEOUT) == 0) {
-				System.out.print(selector.keys().size());
+			if (selector.select(TIMEOUT) == 0) 
 				continue;
-			}
+
 			Iterator<SelectionKey> keyIter = selector.selectedKeys().iterator();
 			while (keyIter.hasNext()) {
 				SelectionKey key = keyIter.next();
