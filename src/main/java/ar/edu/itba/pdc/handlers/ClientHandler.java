@@ -82,7 +82,7 @@ public class ClientHandler extends Handler {
 								.getUserServer(username);
 						serverChannel.connect(new InetSocketAddress(
 								serverToConnect, 5222));
-						connection.setServerName("jabber.org");
+						connection.setServerName(serverToConnect);
 						serverChannel.configureBlocking(false);
 						register(serverChannel, SelectionKey.OP_READ);
 						connection.setServer(serverChannel);
