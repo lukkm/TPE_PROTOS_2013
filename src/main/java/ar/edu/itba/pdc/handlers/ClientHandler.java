@@ -105,13 +105,15 @@ public class ClientHandler extends Handler {
 			}
 			updateSelectionKeys(connection);
 		} else {
+			/* Perform the read operation */
+			final int bytes = connection.read(s);
+			
+			/* Process what was just read */
 			Runnable command = new Runnable() {
 				public void run() {
-					/* Perform the read operation */
-					int bytes;
 					try {
-						bytes = connection.readFrom(s);
 						if (bytes > 0) {
+							connection.process(bytes, s);
 							updateSelectionKeys(connection);
 						} else if (bytes == -1) {
 							disconnect(key);
@@ -139,20 +141,13 @@ public class ClientHandler extends Handler {
 	 */
 
 	public void write(final SelectionKey key) throws IOException {
-		Runnable command = new Runnable() {
-
-			public void run() {
-				ProxyConnection connection = connections.get(key.channel());
-				try {
-					connection.writeTo((SocketChannel) key.channel());
-					updateSelectionKeys(connection);
-				} catch (IOException e) {
-					logger.error("Can't write to socket");
-				}
-			}
-		};
-
-		threadPool.execute(command);
+		ProxyConnection connection = connections.get(key.channel());
+		try {
+			connection.writeTo((SocketChannel) key.channel());
+			updateSelectionKeys(connection);
+		} catch (IOException e) {
+			logger.error("Can't write to socket");
+		}
 	}
 
 	/**
