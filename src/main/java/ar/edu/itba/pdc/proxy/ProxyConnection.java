@@ -40,7 +40,7 @@ public class ProxyConnection {
 	/* Server connection parameters */
 	private String serverName = null;
 	private String authorizationStream = null;
-	
+
 	private XMPPLogger logger = XMPPLogger.getInstance();
 
 	/* Server Streams */
@@ -63,7 +63,6 @@ public class ProxyConnection {
 	}
 
 	public ProxyConnection(SocketChannel client) {
-		logger.info("Connected Client");
 		this.client = client;
 		this.state = ConnectionState.noState;
 		buffersMap.put(client, new ChannelBuffers());
@@ -97,11 +96,10 @@ public class ProxyConnection {
 	 */
 
 	public void setServerName(String name) {
-
 		this.serverName = name;
 		this.clientJID = clientUsername + "@" + serverName;
-		logger.info("Client ID: " + clientJID);
-		logger.info("To server: " + name);
+		logger.info("Client " + clientUsername + " connected to server: "
+				+ name);
 
 	}
 
@@ -132,8 +130,6 @@ public class ProxyConnection {
 	public void expandBuffer(SocketChannel s, BufferType type) {
 		ChannelBuffers buffers = buffersMap.get(s);
 		buffers.expandBuffer(type);
-		System.out.println("Quedo en el buffer : "
-				+ new String(buffers.getBuffer(type).array()));
 	}
 
 	/**
@@ -227,12 +223,14 @@ public class ProxyConnection {
 	 * @param s
 	 */
 
-	private int read(SocketChannel s) throws IOException {
+	public int read(SocketChannel s) throws IOException {
 		int bytesRead = s.read(buffersMap.get(s).getBuffer(BufferType.read));
 
 		if (bytesRead == -1) {
-			client.close();
-			server.close();
+			if (client != null)
+				client.close();
+			if (server != null)
+				server.close();
 			return -1;
 		}
 
@@ -240,16 +238,14 @@ public class ProxyConnection {
 	}
 
 	/**
-	 * Performs a read operation and then applies the application's logic to
-	 * process it and marshal it into a Stanza list. <a>(See Stanza class)</a>
+	 * Applies the application's logic to process it and marshal it into a
+	 * Stanza list. <a>(See Stanza class)</a>
 	 * 
-	 * First reads from the given socket channel.
+	 * First, the bytes read are passed to the parser which will convert the
+	 * XML stream into an object list to be processed by the proxy.
 	 * 
-	 * Second, the bytes read are passed to the parser which will convert the
-	 * xml stream into an object list to be processed by the proxy.
-	 * 
-	 * Finally, all proxy filters are applied resulting in a changed object
-	 * list, every Stanza object resulting is then sent to the appropiate
+	 * Second, all proxy filters are applied resulting in a changed object
+	 * list, every Stanza object resulting is then sent to the appropriate
 	 * channel.
 	 * 
 	 * @param s
@@ -257,41 +253,24 @@ public class ProxyConnection {
 	 * @throws IOException
 	 */
 
-	public int readFrom(SocketChannel s) throws IOException {
-		int bytesRead = read(s);
-		
-		process(bytesRead, s);
-		
-		return bytesRead;
-	}
-	
-	private synchronized void process(int bytesRead, SocketChannel s) throws IOException {
+	public synchronized void process(int bytesRead, SocketChannel s)
+			throws IOException {
 		if (bytesRead > 0) {
-			/* Codigo para borrar despues */
-			if (s == client)
-				System.out.println("Leido del cliente: "
-						+ new String(buffersMap.get(s)
-								.getBuffer(BufferType.read).array()).substring(
-								0, buffersMap.get(s).getBuffer(BufferType.read)
-										.position()));
-			else
-				System.out.println("Leido del server: "
-						+ new String(buffersMap.get(s)
-								.getBuffer(BufferType.read).array()).substring(
-								0, buffersMap.get(s).getBuffer(BufferType.read)
-										.position()));
-			/* Hasta aca */
-			/* Parse what was just read */
+			
 			List<Stanza> stanzaList = null;
-
+			
 			try {
+				
+				/* Parse what was just read */
 				stanzaList = parser.parse(getBuffer(s, BufferType.read));
+				
 				for (Stanza stanza : stanzaList) {
 					if (stanza.getElement() != null && connected())
 						if (stanza.getElement().getFrom() == null
 								&& s == client)
 							stanza.getElement().setFrom(getClientJID());
 
+					/* Apply every filter to the each stanza */
 					for (Filter f : filterList)
 						f.apply(stanza);
 
@@ -308,13 +287,15 @@ public class ProxyConnection {
 							send(s, stanza);
 					}
 
-					if (!rejected)
-						sendToOppositeChannel(s, stanza);
+					if (!rejected) {
+						if (!stanza.isMessage() || ((Message)stanza.getElement()).getMessage() != null)
+							sendToOppositeChannel(s, stanza);
+					}
 
 				}
 				getBuffer(s, BufferType.read).clear();
 			} catch (ParserConfigurationException e) {
-				e.printStackTrace();
+				logger.error("Parser configuration error");
 			} catch (IncompleteElementsException e) {
 				expandBuffer(s, BufferType.read);
 			}
@@ -331,9 +312,11 @@ public class ProxyConnection {
 		int bytesWrote = 0;
 		if (hasInformationForChannel(s)) {
 			ChannelBuffers channelBuffers = buffersMap.get(s);
-			if (channelBuffers != null && channelBuffers.hasRemainingFor(BufferType.write)) {
+			if (channelBuffers != null
+					&& channelBuffers.hasRemainingFor(BufferType.write)) {
 				channelBuffers.flipBuffer(BufferType.write);
-				bytesWrote = s.write(channelBuffers.getBuffer(BufferType.write));
+				bytesWrote = s
+						.write(channelBuffers.getBuffer(BufferType.write));
 				channelBuffers.clearBuffer(BufferType.write);
 			}
 		}
@@ -376,7 +359,6 @@ public class ProxyConnection {
 	 * @param bytes
 	 */
 
-
 	private void sendMessage(SocketChannel s, byte[] bytes) {
 		appendToBuffer(s, BufferType.write, bytes);
 		buffersMap.get(s).clearBuffer(BufferType.read);
@@ -403,9 +385,9 @@ public class ProxyConnection {
 	 */
 
 	public void handleConnectionStanza(SocketChannel s) throws IOException {
-		int length = read(s);
-		String read = new String(buffersMap.get(s).getBufferArray(BufferType.read))
-				.substring(0, length);
+		read(s);
+		ByteBuffer msg = buffersMap.get(s).getBuffer(BufferType.read);
+		String read = new String(msg.array()).substring(0, msg.position());
 		System.out.println(read);
 		switch (state) {
 			case noState :
@@ -417,6 +399,8 @@ public class ProxyConnection {
 					} else {
 						state = ConnectionState.waitingForStream;
 					}
+				} else {
+					logger.warn("Invalid initial message from client");
 				}
 				break;
 			case waitingForStream :
@@ -424,6 +408,8 @@ public class ProxyConnection {
 					state = ConnectionState.negotiating;
 					sendMessage(s, INITIAL_SERVER_STREAM);
 					sendMessage(s, NEGOTIATION);
+				} else {
+					logger.warn("Invalid stream message from client");
 				}
 				break;
 			case negotiating :
@@ -437,6 +423,8 @@ public class ProxyConnection {
 							stringData.indexOf(0, 1));
 					this.state = ConnectionState.ready;
 					buffersMap.get(client).clearBuffer(BufferType.read);
+				} else {
+					logger.warn("Invalid authorization message from client");
 				}
 				break;
 			case connectingToServer :
@@ -445,17 +433,21 @@ public class ProxyConnection {
 					this.state = ConnectionState.connected;
 				} else if (read.startsWith("<?xml")) {
 					this.state = ConnectionState.waitingForServerFeatures;
+				} else {
+					logger.warn("Invalid initial message from server");
 				}
 				break;
 			case waitingForServerFeatures :
 				if (read.startsWith("<stream:features")) {
 					sendMessage(server, authorizationStream.getBytes());
+					logger.info("Client " + getClientJID()
+							+ " finished connecting to server.");
 					this.state = ConnectionState.connected;
 				} else {
 					this.state = ConnectionState.waitingForServerFeatures;
 				}
 				break;
-			default:
+			default :
 				break;
 		}
 		buffersMap.get(s).clearBuffer(BufferType.read);

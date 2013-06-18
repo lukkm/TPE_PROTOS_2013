@@ -18,7 +18,7 @@ public class Multiplexing{
 		return instance;
 	}
 	
-	/* Desde archivo de configuracion */
+	/* From configuration file */
 	private Multiplexing() {
 		usersOwnServers = new HashMap<String, String>();
 		String multiplexed = ConfigurationCommands.getInstance().getProperty("multiplex");
@@ -26,7 +26,7 @@ public class Multiplexing{
 		updateMultiplexedUsers(multiplexed);
 	}
 	
-	/* Para cambios desde consola */
+	/* From admin changes */
 	public void updateMultiplexedUsers (String rawUsers) {
 		if (rawUsers != null && !rawUsers.equals("")) {
 			for (String s : rawUsers.split(";")) {

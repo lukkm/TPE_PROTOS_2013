@@ -29,7 +29,6 @@ public class DispatcherHandler {
 	 * available handlers. Should they return a new SocketChannel, it adds it to
 	 * the selector with the default settings (OP_READ).
 	 * 
-	 * 
 	 * @throws IOException
 	 */
 
@@ -55,11 +54,6 @@ public class DispatcherHandler {
 		handlerMap.put(adminChannel, adminHandler);
 
 		while (!Thread.interrupted()) {
-			/*
-			 * Se puede usar syncronized lists (listas con acceso concurrente)
-			 * para registrar las keys que quieren leer/escribir y aca leer de
-			 * esa lista y registrar en el selector las respectivas acciones
-			 */
 			if (selector.select(TIMEOUT) == 0) {
 				System.out.print(selector.keys().size());
 				continue;
@@ -78,10 +72,6 @@ public class DispatcherHandler {
 				}
 
 				if (key.isReadable()) {
-					/*
-					 * Cambiar el read para que tampoco conozca la key y
-					 * directamente el add lo haga aca.
-					 */
 					SocketChannel channel = handlerMap.get(key.channel()).read(
 							key);
 					if (channel != null)
