@@ -1,6 +1,7 @@
 package ar.edu.itba.pdc.handlers;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
@@ -41,8 +42,8 @@ public class ClientHandler extends Handler {
 	 */
 
 	public void accept(SocketChannel channel) throws IOException {
-		logger.info("Incoming new connection from client "
-				+ channel.getRemoteAddress().toString());
+//		logger.info("Incoming new connection from client "
+//				+ channel.getRemoteAddress().toString());
 		connections.put(channel, new ProxyConnection(channel));
 	}
 
@@ -79,11 +80,6 @@ public class ClientHandler extends Handler {
 						serverChannel = SocketChannel.open();
 						serverToConnect = Multiplexing.getInstance()
 								.getUserServer(username);
-						System.out
-								.println("---------------------------------------------------------------------");
-						System.out.println("Connecting to: " + serverToConnect);
-						System.out
-								.println("---------------------------------------------------------------------");
 						serverChannel.connect(new InetSocketAddress(
 								serverToConnect, 5222));
 						connection.setServerName("jabber.org");
@@ -93,30 +89,35 @@ public class ClientHandler extends Handler {
 						connection.writeFirstStreamToServer();
 						connections.put(serverChannel, connection);
 					} catch (UnresolvedAddressException e) {
-						logger.warn("Can't find server with address "
+						logger.error("Unable to find server with address "
 								+ serverToConnect);
-						connections.remove(key.channel());
-						serverChannel.close();
-						key.channel().close();
-						key.cancel();
+						serverDisconnect(serverChannel, key);
+						return null;
+					} catch (ConnectException e) {
+						logger.error("Unable to connect to server with address "
+								+ serverToConnect);
+						serverDisconnect(serverChannel, key);
 						return null;
 					}
 				}
 			}
 			updateSelectionKeys(connection);
 		} else {
+			/* Perform the read operation */
+			final int bytes = connection.read(s);
+
+			/* Process what was just read */
 			Runnable command = new Runnable() {
 				public void run() {
-					/* Perform the read operation */
-					int bytes;
 					try {
-						bytes = connection.readFrom(s);
 						if (bytes > 0) {
+							connection.process(bytes, s);
 							updateSelectionKeys(connection);
 						} else if (bytes == -1) {
 							disconnect(key);
 						}
 					} catch (IOException e) {
+						logger.error("Error when reading from client");
 						disconnect(key);
 					}
 				}
@@ -139,20 +140,13 @@ public class ClientHandler extends Handler {
 	 */
 
 	public void write(final SelectionKey key) throws IOException {
-		Runnable command = new Runnable() {
-
-			public void run() {
-				ProxyConnection connection = connections.get(key.channel());
-				try {
-					connection.writeTo((SocketChannel) key.channel());
-					updateSelectionKeys(connection);
-				} catch (IOException e) {
-					logger.error("Can't write to socket");
-				}
-			}
-		};
-
-		threadPool.execute(command);
+		ProxyConnection connection = connections.get(key.channel());
+		try {
+			connection.writeTo((SocketChannel) key.channel());
+			updateSelectionKeys(connection);
+		} catch (IOException e) {
+			logger.error("Unable to write to socket");
+		}
 	}
 
 	/**
@@ -194,6 +188,22 @@ public class ClientHandler extends Handler {
 			if (conn.hasServer())
 				connections.remove(conn.getServerChannel());
 		}
+		key.cancel();
+	}
+
+	/**
+	 * Closes the connection when it is not possible to connect to the server
+	 * 
+	 * @param serverChannel
+	 * @param key
+	 * @throws IOException
+	 */
+
+	private void serverDisconnect(SocketChannel serverChannel, SelectionKey key)
+			throws IOException {
+		connections.remove(key.channel());
+		serverChannel.close();
+		key.channel().close();
 		key.cancel();
 	}
 
