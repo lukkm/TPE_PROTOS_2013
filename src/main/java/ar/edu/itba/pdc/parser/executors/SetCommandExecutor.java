@@ -21,7 +21,8 @@ public class SetCommandExecutor extends AbstractCommandExecutor {
 		String commandLower = command.toLowerCase();
 		if (commandLower.equals("interval")) {
 			try {
-				Integer.valueOf(value);
+				if (Integer.valueOf(value) < 10000)
+					return null;
 			} catch (NumberFormatException e) {
 				return null;
 			}
