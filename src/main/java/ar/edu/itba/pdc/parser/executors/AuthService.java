@@ -5,7 +5,7 @@ import org.apache.commons.codec.binary.Base64;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 
-public class AuthService implements CommandExecutor{
+public class AuthService extends AbstractCommandExecutor {
 
 	private static AuthService instance = null;
 	private String password = "secreto546";
@@ -34,12 +34,16 @@ public class AuthService implements CommandExecutor{
 	private String passwordChange(String newPassword) {
 		this.password = newPassword;
 		this.commandManager.setProperty("password", new String(Base64.encodeBase64(newPassword.getBytes())));
+		getLogger().info("Changed administrator password");
 		return "OK";
 	}
 	
 	private String checkAuth(String value) {
-		if (value.equals(password))
+		if (value.equals(password)) {
+			getLogger().info("Administrator logged in");
 			return "PASSWORD OK";
+		}	
+		getLogger().info("Administrator authorization rejected");
 		return "INVALID PASSWORD";
 	}
 

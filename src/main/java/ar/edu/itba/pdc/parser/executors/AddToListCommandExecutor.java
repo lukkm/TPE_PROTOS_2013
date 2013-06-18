@@ -2,7 +2,7 @@ package ar.edu.itba.pdc.parser.executors;
 
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
-public class AddToListCommandExecutor implements CommandExecutor{
+public class AddToListCommandExecutor extends AbstractCommandExecutor {
 
 	private static AddToListCommandExecutor instance = null;
 	private ConfigurationCommands commandManager;
@@ -31,6 +31,8 @@ public class AddToListCommandExecutor implements CommandExecutor{
 			commandManager.setProperty(command, oldValue + ";" + newValue);
 		else
 			commandManager.setProperty(command, newValue);
+		
+		getLogger().info("Added " + value + " to " + command + " list");
 		return "OK";
 	}
 

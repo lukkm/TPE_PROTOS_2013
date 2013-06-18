@@ -59,9 +59,6 @@ public class AdminParser {
 	private String takeActions(Map<String, String> commands)
 			throws BadSyntaxException {
 
-//		if (commands.isEmpty()) {
-//			throw new BadSyntaxException();
-//		}
 		String responseToAdmin = null;
 		for (String cmd : commands.keySet()) {
 			responseToAdmin = commandTypes.get(cmd).execute(cmd,

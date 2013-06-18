@@ -3,7 +3,7 @@ package ar.edu.itba.pdc.parser.executors;
 import ar.edu.itba.pdc.filters.StatisticsFilter;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
-public class GetCommandExecutor implements CommandExecutor{
+public class GetCommandExecutor extends AbstractCommandExecutor {
 
 	private static GetCommandExecutor instance = null;
 	private ConfigurationCommands commandManager;
@@ -22,6 +22,7 @@ public class GetCommandExecutor implements CommandExecutor{
 		commandManager.saveFile();
 		String ans = null;
 		if (command.equals("getStatistics")) {
+			getLogger().info("Statistics answered to administrator");
 			ans = StatisticsFilter.getInstance().execute();
 		} else if (command.equals("monitor")) {
 			//TODO

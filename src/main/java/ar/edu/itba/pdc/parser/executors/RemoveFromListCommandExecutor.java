@@ -2,7 +2,7 @@ package ar.edu.itba.pdc.parser.executors;
 
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
-public class RemoveFromListCommandExecutor implements CommandExecutor {
+public class RemoveFromListCommandExecutor extends AbstractCommandExecutor {
 
 	private static RemoveFromListCommandExecutor instance = null;
 	private ConfigurationCommands commandManager;
@@ -37,6 +37,7 @@ public class RemoveFromListCommandExecutor implements CommandExecutor {
 		}
 		
 		commandManager.setProperty("silenceuser", newValue.substring(1));
+		getLogger().info("Removed " + value + " from " + command + " list");
 		
 		return "OK";
 	}
