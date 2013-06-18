@@ -10,6 +10,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import ar.edu.itba.pdc.jabber.JabberElement;
 import ar.edu.itba.pdc.jabber.Message;
 import ar.edu.itba.pdc.jabber.Presence;
+import ar.edu.itba.pdc.parser.enumerations.ParsingState;
 import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPHandler extends DefaultHandler {
@@ -91,6 +92,8 @@ public class XMPPHandler extends DefaultHandler {
 			case activeState:
 				if (currentStanza.isMessage())
 					((Message)currentStanza.getElement()).setActive(str);
+				break;
+			default:
 				break;
 		}
 		if (indentCount > 0 && currentXMLElement != null) 

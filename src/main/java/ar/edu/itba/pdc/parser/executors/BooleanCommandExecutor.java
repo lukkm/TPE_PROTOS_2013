@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.parser;
+package ar.edu.itba.pdc.parser.executors;
 
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 

@@ -10,26 +10,42 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ar.edu.itba.pdc.exceptions.BadSyntaxException;
-import ar.edu.itba.pdc.interfaces.TCPHandler;
+import ar.edu.itba.pdc.logger.XMPPLogger;
 import ar.edu.itba.pdc.parser.AdminParser;
-import ar.edu.itba.pdc.proxy.BufferType;
 import ar.edu.itba.pdc.proxy.ChannelBuffers;
+import ar.edu.itba.pdc.proxy.enumerations.BufferType;
 
-public class AdminHandler implements TCPHandler {
+public class AdminHandler extends Handler {
 
 	private Map<SocketChannel, ChannelBuffers> config;
-	private Selector selector;
 	private AdminParser parser;
-
+	private XMPPLogger logger = XMPPLogger.getInstance();
+	
 	public AdminHandler(Selector selector) {
-		this.selector = selector;
+		super(selector);
 		config = new HashMap<SocketChannel, ChannelBuffers>();
 		parser = new AdminParser();
 	}
 
+	/**
+	 * Handles incoming connections to admin port.
+	 * 
+	 * Creates a new ChannelBuffers object which will contain the read and write
+	 * buffers related to the channel.
+	 * 
+	 */
+
 	public void accept(SocketChannel channel) throws IOException {
+		logger.info("New admin connected");
 		config.put(channel, new ChannelBuffers());
 	}
+
+	/**
+	 * Handles incoming reads from administrators.
+	 * 
+	 * Parses the message and validates the syntax.
+	 * 
+	 */
 
 	public SocketChannel read(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel) key.channel();
@@ -45,7 +61,7 @@ public class AdminHandler implements TCPHandler {
 			System.out.println("Bad syntax");
 			s.write(ByteBuffer.wrap("BAD SYNTAX\n".getBytes()));
 		} catch (Exception e) {
-			System.out.println("Probably lost connection with the admin"); //TODO agregar al logger
+			logger.error("Lost connection with the admin");
 			s.close();
 			key.cancel();
 			return null;
@@ -54,6 +70,14 @@ public class AdminHandler implements TCPHandler {
 			updateSelectionKeys(s);
 			return null;
 	}
+
+	/**
+	 * Handles write operations.
+	 * 
+	 * Gets the buffer from the ChannelBuffers object and writes directly into
+	 * it.
+	 * 
+	 */
 
 	public void write(SelectionKey key) throws IOException {
 		SocketChannel s = (SocketChannel) key.channel();
@@ -64,14 +88,22 @@ public class AdminHandler implements TCPHandler {
 		wrBuffer.compact();
 	}
 
+	/**
+	 * Updates selector keys for a specific connection.
+	 * 
+	 * Always sets the OP_READ flag, in case any endpoint wants to write
+	 * something.
+	 * 
+	 * In case there's pending information in the write buffer for a specific
+	 * channel, sets the channel OP_WRITE flag.
+	 * 
+	 * @param connection
+	 * @throws ClosedChannelException
+	 */
+
 	private void updateSelectionKeys(SocketChannel s)
 			throws ClosedChannelException {
 		ChannelBuffers buffers = config.get(s);
-		if (buffers.getBuffer(BufferType.write).capacity() != buffers
-				.getBuffer(BufferType.write).remaining()) {
-			s.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		} else {
-			s.register(selector, SelectionKey.OP_READ);
-		}
+		updateChannelKeys(buffers.hasInformationFor(BufferType.write), s);
 	}
 }

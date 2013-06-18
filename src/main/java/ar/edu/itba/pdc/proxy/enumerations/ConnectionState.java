@@ -1,4 +1,4 @@
-package ar.edu.itba.pdc.proxy;
+package ar.edu.itba.pdc.proxy.enumerations;
 
 public enum ConnectionState {
 	noState,

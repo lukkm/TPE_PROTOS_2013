@@ -6,167 +6,195 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import javax.xml.parsers.ParserConfigurationException;
-
-import ar.edu.itba.pdc.exceptions.IncompleteElementsException;
-import ar.edu.itba.pdc.filters.Filter;
 import ar.edu.itba.pdc.filters.Multiplexing;
-import ar.edu.itba.pdc.filters.SilentUsersFilter;
-import ar.edu.itba.pdc.filters.StatisticsFilter;
-import ar.edu.itba.pdc.filters.TransformationFilter;
-import ar.edu.itba.pdc.interfaces.TCPHandler;
-import ar.edu.itba.pdc.jabber.Message;
-import ar.edu.itba.pdc.parser.XMPPParser;
-import ar.edu.itba.pdc.proxy.BufferType;
+import ar.edu.itba.pdc.logger.XMPPLogger;
 import ar.edu.itba.pdc.proxy.ProxyConnection;
-import ar.edu.itba.pdc.stanzas.Stanza;
 
-public class ClientHandler implements TCPHandler {
+public class ClientHandler extends Handler {
 
 	private Map<SocketChannel, ProxyConnection> connections;
-	private XMPPParser parser;
-	private Selector selector;
-	private List<Filter> filterList;
+	private ExecutorService threadPool;
+	private XMPPLogger logger = XMPPLogger.getInstance();
 
 	public ClientHandler(Selector selector) {
-		this.selector = selector;
+		super(selector);
 		this.connections = new HashMap<SocketChannel, ProxyConnection>();
-		this.parser = new XMPPParser();
-		this.filterList = new LinkedList<Filter>();
-		initialize();
-	}
-
-	private void initialize() {
-		filterList.add(SilentUsersFilter.getInstance());
-		filterList.add(StatisticsFilter.getInstance());
-		filterList.add(TransformationFilter.getInstance());
+		this.threadPool = Executors.newFixedThreadPool(10);
 	}
 
 	/*
 	 * Ver ConcurrentHashMap para ver que socket fue con cada thread
 	 */
 
+	/**
+	 * Handles incoming connections to client port.
+	 * 
+	 * Creates a new ProxyConnection object which will contain all the
+	 * information about the connection between the client and it's respective
+	 * server.
+	 */
+
 	public void accept(SocketChannel channel) throws IOException {
+		logger.info("Incoming new connection from client "
+				+ channel.getRemoteAddress().toString());
 		connections.put(channel, new ProxyConnection(channel));
 	}
 
-	public SocketChannel read(SelectionKey key) throws IOException {
+	/**
+	 * Handles incoming reads from clients and servers.
+	 * 
+	 * The first one to connect here will be the client trying to connect a
+	 * specific server.
+	 * 
+	 * If not yet connected to server, writes default streams to client in order
+	 * to obtain its username. <blockquote>
+	 * connection.handleConnectionStanza(s); </blockquote>
+	 * 
+	 * Once obtained, opens a new socket to connect to the server, adds it to
+	 * the related ProxyConnection object and starts working as a proper proxy
+	 * filtering and modifying the messages that pass by.
+	 * 
+	 */
 
-		SocketChannel s = (SocketChannel) key.channel();
+	public SocketChannel read(final SelectionKey key) throws IOException {
 
-		ProxyConnection connection = connections.get(s);
+		final SocketChannel s = (SocketChannel) key.channel();
+		final ProxyConnection connection = connections.get(s);
 
 		SocketChannel serverChannel = null;
 
 		if (!connection.hasConnectedServer()) {
-			if (!connection.connected()) {				
+			if (!connection.connected()) {
 				connection.handleConnectionStanza(s);
-				if (connection.readyToConnectToServer()) {					
+				if (connection.readyToConnectToServer()) {
 					String username = connection.getClientUsername();
-					serverChannel = SocketChannel.open();
-					String serverToConnect = Multiplexing.getInstance().getUserServer(username);
-					System.out.println("---------------------------------------------------------------------");
-					System.out.println("Connecting to: " + serverToConnect);
-					System.out.println("---------------------------------------------------------------------");
-					serverChannel.connect(new InetSocketAddress(serverToConnect, 5222));
-					connection.setServerName("jabber.org");
-					serverChannel.configureBlocking(false);
-					serverChannel.register(selector, SelectionKey.OP_READ);
-					connection.setServer(serverChannel);
-					connection.writeFirstStreamToServer();
-					connections.put(serverChannel, connection);
-				} 
+					String serverToConnect = "";
+					try {
+						serverChannel = SocketChannel.open();
+						serverToConnect = Multiplexing.getInstance()
+								.getUserServer(username);
+						System.out
+								.println("---------------------------------------------------------------------");
+						System.out.println("Connecting to: " + serverToConnect);
+						System.out
+								.println("---------------------------------------------------------------------");
+						serverChannel.connect(new InetSocketAddress(
+								serverToConnect, 5222));
+						connection.setServerName("jabber.org");
+						serverChannel.configureBlocking(false);
+						register(serverChannel, SelectionKey.OP_READ);
+						connection.setServer(serverChannel);
+						connection.writeFirstStreamToServer();
+						connections.put(serverChannel, connection);
+					} catch (UnresolvedAddressException e) {
+						logger.warn("Can't find server with address "
+								+ serverToConnect);
+						connections.remove(key.channel());
+						serverChannel.close();
+						key.channel().close();
+						key.cancel();
+						return null;
+					}
+				}
 			}
 			updateSelectionKeys(connection);
-			return serverChannel;
 		} else {
-
-			/* Perform the read operation */
-			int bytes = connection.readFrom(s);
-	
-			if (bytes > 0) {
-				
-				/* Parse what was just read */
-				List<Stanza> stanzaList = null;
-				
-				try {
-					stanzaList = parser.parse(connection.getBuffer(s, BufferType.read));
-					for (Stanza stanza : stanzaList) {
-						if (stanza.getElement() != null && connection.connected())
-							if (stanza.getElement().getFrom() == null && s == connection.getClientChannel())
-									stanza.getElement().setFrom(connection.getClientJID());
-						
-						for (Filter f : filterList)
-							f.apply(stanza);
-		
-						boolean rejected = false;
-						
-						if (stanza.isMessage()) {
-							Message msg = (Message) stanza.getElement();
-		
-							rejected = (msg.getFrom().contains(connection.getClientJID()) || msg
-									.getTo().contains(connection.getClientJID()))
-									&& stanza.isrejected();
-						
-							if (rejected && connection.getClientChannel() == s)
-								connection.send(s, stanza);
+			Runnable command = new Runnable() {
+				public void run() {
+					/* Perform the read operation */
+					int bytes;
+					try {
+						bytes = connection.readFrom(s);
+						if (bytes > 0) {
+							updateSelectionKeys(connection);
+						} else if (bytes == -1) {
+							disconnect(key);
 						}
-						
-						if (!rejected)
-							sendToOppositeChannel(connection, s, stanza);
-					
+					} catch (IOException e) {
+						disconnect(key);
 					}
-					updateSelectionKeys(connection);
-					connection.getBuffer(s, BufferType.read).clear();
-					return null;
-				} catch (ParserConfigurationException e) {
-					e.printStackTrace();
-				} catch (IncompleteElementsException e) {
-					connection.expandBuffer(s, BufferType.read);
 				}
-				
-			} else if (bytes == -1) {
-				key.cancel();
-			}
-	
-			return serverChannel;
+			};
+
+			threadPool.execute(command);
 		}
-		
+
+		return serverChannel;
+
 	}
 
-	public void write(SelectionKey key) throws IOException {
-		ProxyConnection connection = connections.get(key.channel());
-		connection.writeTo((SocketChannel) key.channel());
-		updateSelectionKeys(connection);
+	/**
+	 * Handles write operations.
+	 * 
+	 * Delegates the write operation to the ProxyConnection object specifying
+	 * which one of the two channels (client or server) is the one on what we
+	 * are trying to write.
+	 * 
+	 */
+
+	public void write(final SelectionKey key) throws IOException {
+		Runnable command = new Runnable() {
+
+			public void run() {
+				ProxyConnection connection = connections.get(key.channel());
+				try {
+					connection.writeTo((SocketChannel) key.channel());
+					updateSelectionKeys(connection);
+				} catch (IOException e) {
+					logger.error("Can't write to socket");
+				}
+			}
+		};
+
+		threadPool.execute(command);
 	}
+
+	/**
+	 * Updates selector keys for a specific connection.
+	 * 
+	 * Always sets the OP_READ flag, in case any endpoint wants to write
+	 * something.
+	 * 
+	 * In case there's pending information in the write buffer for a specific
+	 * channel, sets the channel OP_WRITE flag.
+	 * 
+	 * @param connection
+	 * @throws ClosedChannelException
+	 */
 
 	private void updateSelectionKeys(ProxyConnection connection)
 			throws ClosedChannelException {
 		if (connection.hasServer())
-			updateChannelKeys(connection, connection.getServerChannel());
+			updateChannelKeys(connection.hasInformationForChannel(connection
+					.getServerChannel()), connection.getServerChannel());
 		if (connection.hasClient())
-			updateChannelKeys(connection, connection.getClientChannel());
-	}
-	
-	private void updateChannelKeys(ProxyConnection connection, SocketChannel channel) 
-			throws ClosedChannelException {
-		if (connection.hasInformationForChannel(channel)) 
-			channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		else
-			channel.register(selector, SelectionKey.OP_READ);
+			updateChannelKeys(connection.hasInformationForChannel(connection
+					.getClientChannel()), connection.getClientChannel());
 	}
 
-	public void sendToOppositeChannel(ProxyConnection connection, SocketChannel s, Stanza stanza) {
-		if (s == connection.getClientChannel()) {
-			connection.send(connection.getServerChannel(), stanza);
-		} else {
-			connection.send(connection.getClientChannel(), stanza);
+	/**
+	 * Disconnects the channels associated with this key and then cancels the
+	 * key
+	 * 
+	 * @param key
+	 */
+
+	private void disconnect(SelectionKey key) {
+		logger.info("Channel disconnected");
+		ProxyConnection conn = connections.get(key.channel());
+		if (conn != null) {
+			if (conn.hasClient())
+				connections.remove(conn.getClientChannel());
+			if (conn.hasServer())
+				connections.remove(conn.getServerChannel());
 		}
+		key.cancel();
 	}
 
 }
