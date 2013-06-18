@@ -14,7 +14,7 @@ public class BooleanCommandExecutor extends AbstractCommandExecutor {
 		return instance;
 	}
 	
-	public BooleanCommandExecutor() {
+	private BooleanCommandExecutor() {
 		commandManager = ConfigurationCommands.getInstance();
 	}
 	

@@ -13,7 +13,7 @@ public class AddToListCommandExecutor extends AbstractCommandExecutor {
 		return instance;
 	}
 	
-	public AddToListCommandExecutor() {
+	private AddToListCommandExecutor() {
 		commandManager = ConfigurationCommands.getInstance();
 	}
 	

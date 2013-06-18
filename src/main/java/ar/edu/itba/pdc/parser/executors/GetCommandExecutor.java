@@ -14,7 +14,7 @@ public class GetCommandExecutor extends AbstractCommandExecutor {
 		return instance;
 	}
 	
-	public GetCommandExecutor() {
+	private GetCommandExecutor() {
 		commandManager = ConfigurationCommands.getInstance();
 	}
 	

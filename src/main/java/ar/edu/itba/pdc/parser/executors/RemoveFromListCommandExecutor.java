@@ -13,7 +13,7 @@ public class RemoveFromListCommandExecutor extends AbstractCommandExecutor {
 		return instance;
 	}
 	
-	public RemoveFromListCommandExecutor() {
+	private RemoveFromListCommandExecutor() {
 		commandManager = ConfigurationCommands.getInstance();
 	}
 	
