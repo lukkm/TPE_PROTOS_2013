@@ -41,7 +41,7 @@ public class DispatcherHandler {
 
 		/* Bind client socket */
 		ServerSocketChannel clientChannel = ServerSocketChannel.open();
-		clientChannel.socket().bind(new InetSocketAddress(5678));
+		clientChannel.socket().bind(new InetSocketAddress(5222));
 		clientChannel.configureBlocking(false);
 		clientChannel.register(selector, SelectionKey.OP_ACCEPT);
 		handlerMap.put(clientChannel, clientHandler);
