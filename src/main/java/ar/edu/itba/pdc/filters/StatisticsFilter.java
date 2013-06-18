@@ -67,7 +67,7 @@ public class StatisticsFilter implements Filter {
 				userTotalBytesTransfered += bytesTransfered.getValue();
 			}
 			globalTotalByteTransfers += userTotalBytesTransfered;
-			if (userTotalAccesses != 0 && userTotalBytesTransfered != 0) {
+			if (userTotalAccesses != 0 || userTotalBytesTransfered != 0) {
 				ans += "Estadistica del Usuario: " + ps.jid + "\n\n";
 				ans += "Accesos totales del usuario:    " + userTotalAccesses
 						+ "\n";

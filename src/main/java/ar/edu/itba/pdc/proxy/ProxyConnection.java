@@ -222,12 +222,14 @@ public class ProxyConnection {
 	 * @param s
 	 */
 
-	private int read(SocketChannel s) throws IOException {
+	public int read(SocketChannel s) throws IOException {
 		int bytesRead = s.read(buffersMap.get(s).getBuffer(BufferType.read));
 
 		if (bytesRead == -1) {
-			client.close();
-			server.close();
+			if (client != null)
+				client.close();
+			if (server != null)
+				server.close();
 			return -1;
 		}
 
@@ -252,15 +254,15 @@ public class ProxyConnection {
 	 * @throws IOException
 	 */
 
-	public int readFrom(SocketChannel s) throws IOException {
-		int bytesRead = read(s);
-		
-		process(bytesRead, s);
-		
-		return bytesRead;
-	}
+//	public int readFrom(SocketChannel s) throws IOException {
+//		int bytesRead = read(s);
+//		
+//		process(bytesRead, s);
+//		
+//		return bytesRead;
+//	}
 	
-	private synchronized void process(int bytesRead, SocketChannel s) throws IOException {
+	public synchronized void process(int bytesRead, SocketChannel s) throws IOException {
 		if (bytesRead > 0) {
 			/* Codigo para borrar despues */
 			if (s == client)
