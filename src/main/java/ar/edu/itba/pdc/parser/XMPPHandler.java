@@ -73,7 +73,6 @@ public class XMPPHandler extends DefaultHandler {
 			 currentStanza.complete();
 			 currentStanza.setXMLString(currentXMLElement.toString());
 			 stanzas.add(currentStanza);
-			 System.out.println("Completada stanza: " + element);
 		 }
 	}
 	

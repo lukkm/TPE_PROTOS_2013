@@ -128,7 +128,7 @@ public class ChannelBuffers {
 	 * 
 	 * @param type
 	 */
-	
+
 	public void expandBuffer(BufferType type) {
 		ByteBuffer buf = getBuffer(type);
 		buf.flip();
@@ -140,7 +140,7 @@ public class ChannelBuffers {
 	 * 
 	 * @param type
 	 */
-	
+
 	public boolean hasRemainingFor(BufferType type) {
 		return buffers.get(type) != null && buffers.get(type).hasRemaining();
 	}
@@ -150,7 +150,7 @@ public class ChannelBuffers {
 	 * 
 	 * @param type
 	 */
-	
+
 	public boolean hasInformationFor(BufferType type) {
 		return buffers.get(type) != null
 				&& (buffers.get(type).capacity() != buffers.get(type)

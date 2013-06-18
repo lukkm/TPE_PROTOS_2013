@@ -80,11 +80,6 @@ public class ClientHandler extends Handler {
 						serverChannel = SocketChannel.open();
 						serverToConnect = Multiplexing.getInstance()
 								.getUserServer(username);
-						System.out
-								.println("---------------------------------------------------------------------");
-						System.out.println("Connecting to: " + serverToConnect);
-						System.out
-								.println("---------------------------------------------------------------------");
 						serverChannel.connect(new InetSocketAddress(
 								serverToConnect, 5222));
 						connection.setServerName("jabber.org");
@@ -110,7 +105,7 @@ public class ClientHandler extends Handler {
 		} else {
 			/* Perform the read operation */
 			final int bytes = connection.read(s);
-			
+
 			/* Process what was just read */
 			Runnable command = new Runnable() {
 				public void run() {
@@ -122,6 +117,7 @@ public class ClientHandler extends Handler {
 							disconnect(key);
 						}
 					} catch (IOException e) {
+						logger.error("Error when reading from client");
 						disconnect(key);
 					}
 				}
@@ -149,7 +145,7 @@ public class ClientHandler extends Handler {
 			connection.writeTo((SocketChannel) key.channel());
 			updateSelectionKeys(connection);
 		} catch (IOException e) {
-			logger.error("Can't write to socket");
+			logger.error("Unable to write to socket");
 		}
 	}
 
@@ -194,8 +190,17 @@ public class ClientHandler extends Handler {
 		}
 		key.cancel();
 	}
-	
-	private void serverDisconnect(SocketChannel serverChannel, SelectionKey key) throws IOException {
+
+	/**
+	 * Closes the connection when it is not possible to connect to the server
+	 * 
+	 * @param serverChannel
+	 * @param key
+	 * @throws IOException
+	 */
+
+	private void serverDisconnect(SocketChannel serverChannel, SelectionKey key)
+			throws IOException {
 		connections.remove(key.channel());
 		serverChannel.close();
 		key.channel().close();

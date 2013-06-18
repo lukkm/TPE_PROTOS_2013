@@ -37,7 +37,6 @@ public class XMPPParser {
 			extractMessageBodies(xmlString, messageBodies);
 			String newString = "<xmpp-proxy>" + xmlString + "</xmpp-proxy>";
 			byte[] xmlBytes = newString.getBytes();
-			System.out.println("Parsing XML: " + newString);
 			InputStream is = new ByteArrayInputStream(xmlBytes);
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 		    factory.setNamespaceAware(false);

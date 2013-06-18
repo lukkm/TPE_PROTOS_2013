@@ -2,10 +2,18 @@ package ar.edu.itba.pdc.nio;
 
 import java.io.IOException;
 
-public class XMPPProxy {  
+import ar.edu.itba.pdc.logger.XMPPLogger;
 
-    public static void main(String[] args) throws IOException {
+public class XMPPProxy {  
+	
+    public static void main(String[] args) {
         DispatcherHandler dh = new DispatcherHandler();
-        dh.run();
+        try {
+			dh.run();
+		} catch (IOException e) {
+			XMPPLogger.getInstance().error("Cannot start application, IO error.");
+		} catch (Exception e) {
+			XMPPLogger.getInstance().error("Unexpected error, closing application");
+		}
     }
 }
