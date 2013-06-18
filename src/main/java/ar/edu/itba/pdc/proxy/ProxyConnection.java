@@ -260,6 +260,7 @@ public class ProxyConnection {
 			List<Stanza> stanzaList = null;
 			
 			try {
+				
 				/* Parse what was just read */
 				stanzaList = parser.parse(getBuffer(s, BufferType.read));
 				
@@ -286,8 +287,10 @@ public class ProxyConnection {
 							send(s, stanza);
 					}
 
-					if (!rejected)
-						sendToOppositeChannel(s, stanza);
+					if (!rejected) {
+						if (!stanza.isMessage() || ((Message)stanza.getElement()).getMessage() != null)
+							sendToOppositeChannel(s, stanza);
+					}
 
 				}
 				getBuffer(s, BufferType.read).clear();
