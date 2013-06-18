@@ -7,7 +7,7 @@ public class GetCommandExecutor extends AbstractCommandExecutor {
 
 	private static GetCommandExecutor instance = null;
 	private ConfigurationCommands commandManager;
-	
+
 	public static GetCommandExecutor getInstance() {
 		if (instance == null)
 			instance = new GetCommandExecutor();
@@ -17,7 +17,7 @@ public class GetCommandExecutor extends AbstractCommandExecutor {
 	private GetCommandExecutor() {
 		commandManager = ConfigurationCommands.getInstance();
 	}
-	
+
 	public String execute(String command, String value) {
 		commandManager.saveFile();
 		String ans = null;
@@ -25,7 +25,7 @@ public class GetCommandExecutor extends AbstractCommandExecutor {
 			getLogger().info("Statistics answered to administrator");
 			ans = StatisticsFilter.getInstance().execute();
 		} else if (command.equals("monitor")) {
-			//TODO
+			ans = StatisticsFilter.getInstance().executeLatest();
 		}
 		return ans;
 	}

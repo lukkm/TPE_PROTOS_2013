@@ -11,7 +11,7 @@ import ar.edu.itba.pdc.parser.executors.BooleanCommandExecutor;
 import ar.edu.itba.pdc.parser.executors.CommandExecutor;
 import ar.edu.itba.pdc.parser.executors.GetCommandExecutor;
 import ar.edu.itba.pdc.parser.executors.RemoveFromListCommandExecutor;
-import ar.edu.itba.pdc.parser.executors.SetCommandExecutor;
+import ar.edu.itba.pdc.parser.executors.ValueCommandExecutor;
 import ar.edu.itba.pdc.utils.ConfigurationCommands;
 
 public class AdminParser {
@@ -28,15 +28,16 @@ public class AdminParser {
 		commandManager = ConfigurationCommands.getInstance();
 		commandTypes.put("silenceuser", AddToListCommandExecutor.getInstance());
 		commandTypes.put("statistics", BooleanCommandExecutor.getInstance());
-		commandTypes.put("monitor", BooleanCommandExecutor.getInstance());
+		commandTypes.put("monitor", GetCommandExecutor.getInstance());
 		commandTypes.put("getStatistics", GetCommandExecutor.getInstance());
 		commandTypes
 				.put("transformation", BooleanCommandExecutor.getInstance());
-		commandTypes.put("interval", SetCommandExecutor.getInstance());
 		commandTypes.put("unsilenceuser",
 				RemoveFromListCommandExecutor.getInstance());
 		commandTypes.put("auth", AuthService.getInstance());
 		commandTypes.put("changePassword", AuthService.getInstance());
+		commandTypes.put("interval", ValueCommandExecutor.getInstance());
+		commandTypes.put("byteUnit", ValueCommandExecutor.getInstance());
 	}
 
 	/**
