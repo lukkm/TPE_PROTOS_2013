@@ -225,7 +225,7 @@ public class ProxyConnection {
 
 	public int read(SocketChannel s) throws IOException {
 		int bytesRead = s.read(buffersMap.get(s).getBuffer(BufferType.read));
-
+		
 		if (bytesRead == -1) {
 			if (client != null)
 				client.close();
@@ -260,7 +260,6 @@ public class ProxyConnection {
 			List<Stanza> stanzaList = null;
 			
 			try {
-				
 				/* Parse what was just read */
 				stanzaList = parser.parse(getBuffer(s, BufferType.read));
 				
@@ -285,8 +284,9 @@ public class ProxyConnection {
 
 						if (rejected && client == s)
 							send(s, stanza);
-						else
+						else if (rejected) 
 							logger.info("Dropping message sent to " + clientJID + " - SilenceUsersFilter");
+							
 					}
 
 					if (!rejected) {
@@ -445,6 +445,10 @@ public class ProxyConnection {
 							+ " finished connecting to server.");
 					this.state = ConnectionState.connected;
 				} else {
+					if (read.contains("failure")) {
+						this.state = ConnectionState.noState;
+						sendMessage(client, read.getBytes());
+					}
 					this.state = ConnectionState.waitingForServerFeatures;
 				}
 				break;

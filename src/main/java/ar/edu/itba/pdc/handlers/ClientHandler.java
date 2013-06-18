@@ -114,6 +114,7 @@ public class ClientHandler extends Handler {
 							connection.process(bytes, s);
 							updateSelectionKeys(connection);
 						} else if (bytes == -1) {
+							System.out.println("holis");
 							disconnect(key);
 						}
 					} catch (IOException e) {
