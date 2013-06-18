@@ -285,6 +285,8 @@ public class ProxyConnection {
 
 						if (rejected && client == s)
 							send(s, stanza);
+						else
+							logger.info("Dropping message sent to " + clientJID + " - SilenceUsersFilter");
 					}
 
 					if (!rejected) {
@@ -388,7 +390,6 @@ public class ProxyConnection {
 		read(s);
 		ByteBuffer msg = buffersMap.get(s).getBuffer(BufferType.read);
 		String read = new String(msg.array()).substring(0, msg.position());
-		System.out.println(read);
 		switch (state) {
 			case noState :
 				if (read.startsWith("<?xml")) {
