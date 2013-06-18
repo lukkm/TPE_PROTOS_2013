@@ -1,6 +1,7 @@
 package ar.edu.itba.pdc.handlers;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
@@ -93,12 +94,14 @@ public class ClientHandler extends Handler {
 						connection.writeFirstStreamToServer();
 						connections.put(serverChannel, connection);
 					} catch (UnresolvedAddressException e) {
-						logger.warn("Can't find server with address "
+						logger.error("Unable to find server with address "
 								+ serverToConnect);
-						connections.remove(key.channel());
-						serverChannel.close();
-						key.channel().close();
-						key.cancel();
+						serverDisconnect(serverChannel, key);
+						return null;
+					} catch (ConnectException e) {
+						logger.error("Unable to connect to server with address "
+								+ serverToConnect);
+						serverDisconnect(serverChannel, key);
 						return null;
 					}
 				}
@@ -189,6 +192,13 @@ public class ClientHandler extends Handler {
 			if (conn.hasServer())
 				connections.remove(conn.getServerChannel());
 		}
+		key.cancel();
+	}
+	
+	private void serverDisconnect(SocketChannel serverChannel, SelectionKey key) throws IOException {
+		connections.remove(key.channel());
+		serverChannel.close();
+		key.channel().close();
 		key.cancel();
 	}
 
