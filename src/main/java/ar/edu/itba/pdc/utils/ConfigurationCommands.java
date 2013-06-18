@@ -31,7 +31,7 @@ public class ConfigurationCommands {
 			props.load(fis);
 
 		} catch (Exception e) {
-			System.out.println("IO Error");
+			logger.warn("Error loading properties");
 		}
 	}
 
@@ -64,12 +64,12 @@ public class ConfigurationCommands {
 							+ "/src/main/java/ar/edu/itba/pdc/resources/parsedcommands.properties",
 					false);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			logger.warn("Error setting properties");
 		}
 		try {
 			props.store(ops, "Commands");
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.warn("Error setting properties");
 		}
 	}
 

@@ -382,9 +382,9 @@ public class ProxyConnection {
 	 */
 
 	public void handleConnectionStanza(SocketChannel s) throws IOException {
-		int length = read(s);
-		String read = new String(buffersMap.get(s).getBufferArray(
-				BufferType.read)).substring(0, length);
+		read(s);
+		ByteBuffer msg = buffersMap.get(s).getBuffer(BufferType.read);
+		String read = new String(msg.array()).substring(0, msg.position());
 		System.out.println(read);
 		switch (state) {
 			case noState :

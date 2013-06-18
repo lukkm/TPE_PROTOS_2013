@@ -21,7 +21,7 @@ public class XMPPLogger {
 			if (instance == null)
 				instance = new XMPPLogger();
 		} catch (IOException e) {
-			System.out.println("Error");
+			System.out.println("Error opening the logger");
 		}
 		return instance;
 	}
