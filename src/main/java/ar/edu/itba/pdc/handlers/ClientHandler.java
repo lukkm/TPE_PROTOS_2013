@@ -42,8 +42,8 @@ public class ClientHandler extends Handler {
 	 */
 
 	public void accept(SocketChannel channel) throws IOException {
-		logger.info("Incoming new connection from client "
-				+ channel.getRemoteAddress().toString());
+//		logger.info("Incoming new connection from client "
+//				+ channel.getRemoteAddress().toString());
 		connections.put(channel, new ProxyConnection(channel));
 	}
 
