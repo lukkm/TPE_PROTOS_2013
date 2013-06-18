@@ -21,6 +21,11 @@ public class ConfigurationCommands {
 		return instance;
 	}
 
+	/**
+	 * Loads all the properties from the file
+	 * resources/parsedcommands.properties
+	 */
+
 	private ConfigurationCommands() {
 		this.props = new Properties();
 		try {
@@ -35,20 +40,47 @@ public class ConfigurationCommands {
 		}
 	}
 
+	/**
+	 * Returns the value of a given property or null if it is not in the
+	 * properties file.
+	 * 
+	 * @param property
+	 * @return
+	 */
+
 	public String getProperty(String property) {
 		if (props.get(property) == null)
 			return "";
 		return props.get(property).toString();
 	}
 
+	/**
+	 * Sets the value of a given property.
+	 * 
+	 * @param property
+	 * @param value
+	 */
+
 	public void setProperty(String property, String value) {
 		logger.info("Applied " + property + " to " + value);
 		props.setProperty(property, value);
 	}
 
+	/**
+	 * Returns true if the file resources/parsedcommands.properties contains the
+	 * given property
+	 * 
+	 * @param property
+	 * @return
+	 */
+
 	public boolean hasProperty(String property) {
 		return props.containsKey(property);
 	}
+
+	/**
+	 * Commits the local changes back to the properties file.
+	 */
 
 	public void saveFile() {
 		String current = "";

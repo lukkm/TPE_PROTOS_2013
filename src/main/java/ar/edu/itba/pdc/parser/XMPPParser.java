@@ -21,27 +21,44 @@ import ar.edu.itba.pdc.stanzas.Stanza;
 
 public class XMPPParser {
 
-	public List<Stanza> parse(ByteBuffer xmlStream) throws ParserConfigurationException, IOException, IncompleteElementsException {
-		
+	/**
+	 * Parses an XML element.
+	 * 
+	 * First, adds a root node to it in order to make it XML valid.
+	 * 
+	 * Then, parses the XML returning a list of stanzas and throwing an
+	 * exception in case any stanza turns out to be incomplete
+	 * 
+	 * @param xmlStream
+	 * @return
+	 * @throws ParserConfigurationException
+	 * @throws IOException
+	 * @throws IncompleteElementsException
+	 */
+
+	public List<Stanza> parse(ByteBuffer xmlStream)
+			throws ParserConfigurationException, IOException,
+			IncompleteElementsException {
+
 		String xmlString = new String(xmlStream.array());
 		xmlString = xmlString.substring(0, xmlStream.position());
 		List<String> messageBodies = new ArrayList<String>();
-		
-		if(xmlString.contains("<stream:")) {
+
+		if (xmlString.contains("<stream:")) {
 			Stanza s = new Stanza();
 			s.setXMLString(xmlString);
 			List<Stanza> streamList = new LinkedList<Stanza>();
 			streamList.add(s);
 			return streamList;
-		} else {		
+		} else {
 			extractMessageBodies(xmlString, messageBodies);
 			String newString = "<xmpp-proxy>" + xmlString + "</xmpp-proxy>";
 			byte[] xmlBytes = newString.getBytes();
 			InputStream is = new ByteArrayInputStream(xmlBytes);
 			SAXParserFactory factory = SAXParserFactory.newInstance();
-		    factory.setNamespaceAware(false);
-		    factory.setValidating(false);
-		    SAXParser parser;
+			factory.setNamespaceAware(false);
+			factory.setValidating(false);
+			SAXParser parser;
 			try {
 				parser = factory.newSAXParser();
 				XMPPHandler handler = new XMPPHandler();
@@ -56,33 +73,54 @@ public class XMPPParser {
 				throw new IncompleteElementsException();
 			}
 		}
-	   
+
 	}
-	
-	private String extractMessageBodies(String xmlString, List<String> messageBodies) {
+
+	/**
+	 * Extracts the bodies from all messages in the stream, storing them in a
+	 * list to set them later, once the whole stream was parsed and the
+	 * structures made.
+	 * 
+	 * @param xmlString
+	 * @param messageBodies
+	 * @return
+	 */
+
+	private String extractMessageBodies(String xmlString,
+			List<String> messageBodies) {
 		int position = 0;
 		while (xmlString.indexOf("<message", position) > -1) {
 			int bodyPosition = xmlString.indexOf("<body", position);
 			position = xmlString.indexOf(">", bodyPosition);
 			int bodyEndingPosition = xmlString.indexOf("</body>", bodyPosition);
 			if (bodyPosition > -1 && bodyEndingPosition > -1) {
-				String bodyMessage = xmlString.substring(position + 1, bodyEndingPosition);
-				xmlString = xmlString.substring(0, position + 1) + xmlString.substring(bodyEndingPosition, xmlString.length());
+				String bodyMessage = xmlString.substring(position + 1,
+						bodyEndingPosition);
+				xmlString = xmlString.substring(0, position + 1)
+						+ xmlString.substring(bodyEndingPosition,
+								xmlString.length());
 				messageBodies.add(bodyMessage);
 			}
 		}
 		return xmlString;
 	}
-	
-	private void insertMessageBodies(List<Stanza> lstStanzas, List<String> messageBodies) {
+
+	/**
+	 * Inserts back the message bodies into the marshaled objects.
+	 * 
+	 * @param lstStanzas
+	 * @param messageBodies
+	 */
+
+	private void insertMessageBodies(List<Stanza> lstStanzas,
+			List<String> messageBodies) {
 		Iterator<String> iter = messageBodies.iterator();
 		for (Stanza s : lstStanzas) {
 			if (s.isMessage()) {
 				if (iter.hasNext())
-					((Message)s.getElement()).setMessage(iter.next());
+					((Message) s.getElement()).setMessage(iter.next());
 			}
 		}
 	}
-	
-	
+
 }

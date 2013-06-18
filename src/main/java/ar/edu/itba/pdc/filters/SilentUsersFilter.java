@@ -28,7 +28,6 @@ public class SilentUsersFilter implements Filter {
 	}
 
 	public void addSilencedUser(String jid) {
-		
 		if (mapOfSilence != null) {
 			mapOfSilence.add(jid);
 		}
